@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    .prompt-button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 5px;
+      background-color: #10a37f;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .prompt-button:hover {
+      background-color: #0d8c6a;
+    }
+    .custom-prompt {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      resize: vertical;
+      min-height: 60px;
+    }
+    h3 {
+      margin: 10px 0;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h3>ChatGPT Prompt Injector</h3>
+  
+  <button class="prompt-button" data-prompt="Act as a professional copywriter. Please rewrite the following text to make it more engaging and persuasive:">
+    💼 Copywriter
+  </button>
+  
+  <button class="prompt-button" data-prompt="Act as a code reviewer. Please review the following code and provide suggestions for improvement:">
+    👨‍💻 Code Reviewer
+  </button>
+  
+  <button class="prompt-button" data-prompt="Act as a creative writing assistant. Help me brainstorm ideas for:">
+    ✍️ Creative Writer
+  </button>
+  
+  <button class="prompt-button" data-prompt="Act as a business analyst. Please analyze the following and provide insights:">
+    📊 Business Analyst
+  </button>
+  
+  <h3>Custom Prompt</h3>
+  <textarea class="custom-prompt" id="customPrompt" placeholder="Enter your custom prompt here..."></textarea>
+  <button class="prompt-button" id="customButton">
+    🎯 Inject Custom Prompt
+  </button>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
