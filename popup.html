@@ -307,14 +307,14 @@
   <div id="welcomeScreen" class="screen active">
     <div class="welcome-content">
       <div class="logo-container">
-        <img src="logo.png" alt="Eigenarc Logo" class="logo-image">
+        <img src="logo.svg" alt="Eigenarc Logo" class="logo-image">
         <div class="logo-text">Eigenarc</div>
       </div>
       <div class="tagline">
         Your AI Learning Assistant<br>
         Create personalized learning pathways for any goal
       </div>
-      <button class="start-btn" onclick="showScreen('chatScreen')">
+      <button class="start-btn" id="getStartedBtn">
         Get Started
       </button>
     </div>
@@ -341,8 +341,8 @@
         class="chat-input" 
         id="chatInput" 
         placeholder="Tell me about your learning goals..."></textarea>
-      <button class="send-btn" onclick="sendChatMessage()">Send Message</button>
-      <button class="btn-secondary" onclick="showScreen('welcomeScreen')">Back</button>
+      <button class="send-btn" id="sendChatBtn">Send Message</button>
+      <button class="btn-secondary" id="backToWelcomeBtn">Back</button>
     </div>
   </div>
 
@@ -358,11 +358,11 @@
         </div>
       </div>
       <p>Sign in to save your personalized learning plan and start your journey!</p>
-      <button class="signin-btn" onclick="signInWithFirebase()">
+      <button class="signin-btn" id="signinBtn">
         Sign in with Google
       </button>
       <br>
-      <button class="btn-secondary mt-20" onclick="showScreen('chatScreen')">Back to Chat</button>
+      <button class="btn-secondary mt-20" id="backToChatBtn">Back to Chat</button>
     </div>
   </div>
 
@@ -372,14 +372,14 @@
       Welcome back! 🎯
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('currentPlan', this)">Current Plan</button>
-      <button class="tab" onclick="switchTab('createPlan', this)">Create Plan</button>
+      <button class="tab active" id="currentPlanTabBtn" data-tab="currentPlan">Current Plan</button>
+      <button class="tab" id="createPlanTabBtn" data-tab="createPlan">Create Plan</button>
     </div>
     <div class="tab-content">
       <!-- Current Plan Tab -->
       <div id="currentPlanTab" class="tab-panel">
         <div class="plan-selector">
-          <select class="plan-dropdown" id="planDropdown" onchange="loadSelectedPlan()">
+          <select class="plan-dropdown" id="planDropdown">
             <option value="fullstack">Full-Stack Web Development</option>
             <option value="datascience">Data Science Fundamentals</option>
             <option value="mobile">Mobile App Development</option>
@@ -405,7 +405,7 @@
             class="chat-input" 
             id="createPlanInput" 
             placeholder="Describe your new learning goal..."></textarea>
-          <button class="send-btn" onclick="sendCreatePlanMessage()">Send Message</button>
+          <button class="send-btn" id="sendCreatePlanBtn">Send Message</button>
         </div>
       </div>
     </div>
