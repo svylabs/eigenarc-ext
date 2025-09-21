@@ -9,30 +9,39 @@ const samplePlans = {
   fullstack: {
     title: "Full-Stack Web Development",
     description: "A comprehensive 12-week program covering HTML, CSS, JavaScript, React, Node.js, and databases.",
-    lessons: [
-      { id: 1, title: "HTML Fundamentals", duration: "2 hours", completed: true, prompt: "I'm learning HTML fundamentals. Please explain the basic structure of an HTML document and provide examples of common HTML elements." },
-      { id: 2, title: "CSS Styling Basics", duration: "2.5 hours", completed: true, prompt: "I'm learning CSS styling. Please teach me about CSS selectors, properties, and how to style HTML elements effectively." },
-      { id: 3, title: "JavaScript Introduction", duration: "3 hours", completed: false, prompt: "I'm starting to learn JavaScript. Please explain variables, data types, functions, and provide beginner-friendly examples." },
-      { id: 4, title: "DOM Manipulation", duration: "2 hours", completed: false, prompt: "I want to learn DOM manipulation in JavaScript. Please explain how to select elements, modify content, and handle events." },
-      { id: 5, title: "React Components", duration: "3 hours", completed: false, prompt: "I'm learning React. Please explain components, props, state, and show me how to create a simple React application." },
-      { id: 6, title: "Node.js Backend", duration: "3 hours", completed: false, prompt: "I want to learn Node.js for backend development. Please explain server setup, routing, and how to create APIs." }
+    tableOfContents: [
+      { title: "HTML Fundamentals", timeline: "Week 1-2", completed: true },
+      { title: "CSS Styling Basics", timeline: "Week 2-3", completed: true },
+      { title: "JavaScript Introduction", timeline: "Week 3-4", completed: false },
+      { title: "DOM Manipulation", timeline: "Week 4-5", completed: false },
+      { title: "React Components", timeline: "Week 5-7", completed: false },
+      { title: "Node.js Backend", timeline: "Week 8-10", completed: false },
+      { title: "Database Integration", timeline: "Week 10-11", completed: false },
+      { title: "Final Project", timeline: "Week 12", completed: false }
     ]
   },
   datascience: {
     title: "Data Science Fundamentals",
     description: "Learn Python, statistics, data analysis, and machine learning in 10 weeks.",
-    lessons: [
-      { id: 1, title: "Python Basics", duration: "2 hours", completed: false, prompt: "I'm starting data science with Python. Please teach me Python basics including variables, lists, dictionaries, and control structures." },
-      { id: 2, title: "Pandas & Data Analysis", duration: "3 hours", completed: false, prompt: "I want to learn Pandas for data analysis. Please explain DataFrames, data cleaning, and basic data manipulation techniques." },
-      { id: 3, title: "Data Visualization", duration: "2.5 hours", completed: false, prompt: "I'm learning data visualization. Please teach me how to create charts and graphs using matplotlib and seaborn in Python." }
+    tableOfContents: [
+      { title: "Python Basics", timeline: "Week 1-2", completed: false },
+      { title: "Pandas & Data Analysis", timeline: "Week 3-4", completed: false },
+      { title: "Data Visualization", timeline: "Week 5-6", completed: false },
+      { title: "Statistics & Probability", timeline: "Week 7", completed: false },
+      { title: "Machine Learning Intro", timeline: "Week 8-9", completed: false },
+      { title: "Final Data Project", timeline: "Week 10", completed: false }
     ]
   },
   mobile: {
     title: "Mobile App Development",
     description: "Build mobile apps with React Native in 8 weeks.",
-    lessons: [
-      { id: 1, title: "React Native Setup", duration: "1.5 hours", completed: false, prompt: "I want to learn React Native for mobile development. Please guide me through the setup process and explain the basic concepts." },
-      { id: 2, title: "Mobile UI Components", duration: "3 hours", completed: false, prompt: "I'm learning React Native UI components. Please explain Views, Text, TouchableOpacity, and how to create mobile layouts." }
+    tableOfContents: [
+      { title: "React Native Setup", timeline: "Week 1", completed: false },
+      { title: "Mobile UI Components", timeline: "Week 2-3", completed: false },
+      { title: "Navigation & Routing", timeline: "Week 4", completed: false },
+      { title: "State Management", timeline: "Week 5-6", completed: false },
+      { title: "API Integration", timeline: "Week 7", completed: false },
+      { title: "App Store Deployment", timeline: "Week 8", completed: false }
     ]
   }
 };
@@ -139,7 +148,16 @@ function loadSelectedPlan() {
   if (!plan) return;
   
   currentPlan = plan;
-  renderLessonsTable(plan.lessons);
+  renderLessonsTable(plan.tableOfContents);
+}
+
+function constructPrompt(plan, contentItem) {
+  return `Learning Plan: ${plan.title}
+Description: ${plan.description}
+Current Topic: ${contentItem.title}
+Timeline: ${contentItem.timeline}
+
+Please provide detailed learning materials and guidance for this topic based on the context above.`;
 }
 
 function generatePlanResponse(userMessage) {
@@ -163,22 +181,22 @@ function loadCurrentPlan() {
   }
 }
 
-function renderLessonsTable(lessons) {
+function renderLessonsTable(tableOfContents) {
   const tbody = document.getElementById('lessonsTableBody');
   tbody.innerHTML = '';
   
-  lessons.forEach(lesson => {
+  tableOfContents.forEach(content => {
     const row = document.createElement('tr');
-    row.className = `lesson-row ${lesson.completed ? 'completed' : ''}`;
-    row.onclick = () => selectLesson(lesson);
+    row.className = `lesson-row ${content.completed ? 'completed' : ''}`;
+    row.onclick = () => selectLesson(content);
     
     row.innerHTML = `
       <td class="lesson-cell status-icon">
-        ${lesson.completed ? '✅' : '⭕'}
+        ${content.completed ? '✅' : '⭕'}
       </td>
       <td class="lesson-cell">
-        <div class="lesson-title">${lesson.title}</div>
-        <div class="lesson-duration">${lesson.duration}</div>
+        <div class="lesson-title">${content.title}</div>
+        <div class="lesson-duration">${content.timeline}</div>
       </td>
     `;
     
@@ -198,10 +216,13 @@ async function selectLesson(lesson) {
       return;
     }
     
+    // Construct prompt dynamically from plan data
+    const prompt = constructPrompt(currentPlan, lesson);
+    
     // Send message to content script to inject the lesson prompt
     await chrome.tabs.sendMessage(tab.id, {
       action: 'injectPrompt',
-      prompt: lesson.prompt
+      prompt: prompt
     });
     
     // Show success message
@@ -258,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
   document.getElementById('signinBtn').addEventListener('click', signInWithFirebase);
-  document.getElementById('backToChatBtn').addEventListener('click', () => showScreen('chatScreen'));
   document.getElementById('sendCreatePlanBtn').addEventListener('click', sendCreatePlanMessage);
   document.getElementById('planDropdown').addEventListener('change', loadSelectedPlan);
   
