@@ -3,10 +3,6 @@
   "name": "Eigenarc",
   "version": "0.3",
   "description": "Structured learning for Native AI Learners",
-  "permissions": [
-    "tabs",
-    "storage"
-  ],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
@@ -24,11 +20,16 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["firebase.js"],
+      "resources": ["firebase.js", "offscreen.html", "offscreen.js"],
       "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://www.gstatic.com; object-src 'self'"
-  }
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "offscreen"
+  ]
 }
