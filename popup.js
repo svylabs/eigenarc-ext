@@ -103,24 +103,40 @@ function addMessageToChat(sender, message, containerId) {
   container.scrollTop = container.scrollHeight;
 }
 
-function signInWithFirebase() {
+async function signInWithFirebase() {
   const signinBtn = document.querySelector('.signin-btn');
+  const originalText = signinBtn.textContent;
   signinBtn.textContent = 'Signing in...';
   signinBtn.disabled = true;
   
-  setTimeout(() => {
-    // Simulate successful login
-    currentUser = {
-      email: 'user@example.com',
-      name: 'Demo User'
-    };
+  try {
+    // Wait for Firebase to load
+    if (!window.firebaseAuth) {
+      throw new Error('Firebase not loaded');
+    }
     
-    // Save user to storage for persistence
-    chrome.storage.local.set({ currentUser });
+    const result = await window.firebaseAuth.signInWithGoogle();
     
-    // Navigate to home screen
-    showScreen('homeScreen');
-  }, 2000);
+    if (result.success) {
+      // Store user data
+      currentUser = result.user;
+      
+      // Save user to storage for persistence
+      chrome.storage.local.set({ currentUser });
+      
+      // Navigate to home screen
+      showScreen('homeScreen');
+    } else {
+      throw new Error(result.error || 'Authentication failed');
+    }
+  } catch (error) {
+    console.error('Sign in error:', error);
+    alert('Authentication failed. Please try again.');
+    
+    // Reset button
+    signinBtn.textContent = originalText;
+    signinBtn.disabled = false;
+  }
 }
 
 function switchTab(tabName, element) {

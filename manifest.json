@@ -9,7 +9,8 @@
   ],
   "host_permissions": [
     "https://chat.openai.com/*",
-    "https://chatgpt.com/*"
+    "https://chatgpt.com/*",
+    "https://eigenarc.com/*"
   ],
   "content_scripts": [
     {
