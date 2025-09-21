@@ -110,9 +110,25 @@ async function signInWithFirebase() {
   signinBtn.disabled = true;
   
   try {
-    // Wait for Firebase to load
+    // Wait for Firebase to be ready
     if (!window.firebaseAuth) {
-      throw new Error('Firebase not loaded');
+      console.log('Waiting for Firebase to load...');
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Firebase load timeout'));
+        }, 10000);
+        
+        document.addEventListener('firebaseReady', () => {
+          clearTimeout(timeout);
+          resolve();
+        }, { once: true });
+        
+        // Check if already loaded
+        if (window.firebaseReady) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
     }
     
     const result = await window.firebaseAuth.signInWithGoogle();
@@ -288,15 +304,26 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Extension loaded');
   
   // Attach event listeners
-  document.getElementById('getStartedBtn').addEventListener('click', () => {
-    console.log('Get Started clicked');
+  document.getElementById('beginLearningBtn').addEventListener('click', () => {
+    console.log('Begin Learning clicked');
     showScreen('chatScreen');
+  });
+  
+  document.getElementById('tryWithoutSigninBtn').addEventListener('click', () => {
+    console.log('Try without signin clicked');
+    showScreen('guestHomeScreen');
   });
   
   document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
   document.getElementById('signinBtn').addEventListener('click', signInWithFirebase);
   document.getElementById('sendCreatePlanBtn').addEventListener('click', sendCreatePlanMessage);
   document.getElementById('planDropdown').addEventListener('change', loadSelectedPlan);
+  
+  // Add guest signin button handler
+  const guestSigninBtn = document.getElementById('guestSigninBtn');
+  if (guestSigninBtn) {
+    guestSigninBtn.addEventListener('click', () => showScreen('signinScreen'));
+  }
   
   // Tab switching
   document.querySelectorAll('.tab').forEach(tab => {

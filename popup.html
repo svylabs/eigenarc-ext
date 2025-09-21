@@ -124,10 +124,29 @@
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.2s;
+      margin-bottom: 12px;
     }
 
     .start-btn:hover {
       transform: translateY(-2px);
+    }
+
+    .try-without-signin-btn {
+      background: transparent;
+      color: #666;
+      border: 1px solid #ddd;
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .try-without-signin-btn:hover {
+      border-color: hsl(142, 35%, 42%);
+      color: hsl(142, 35%, 42%);
+      transform: translateY(-1px);
     }
 
     /* Chat Screen */
@@ -377,6 +396,119 @@
     .hidden {
       display: none !important;
     }
+
+    /* Guest Screen Styles */
+    .guest-welcome {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .guest-welcome h3 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .guest-welcome p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .signin-prompt {
+      color: hsl(142, 35%, 42%);
+      font-weight: 500;
+    }
+
+    .guest-plans {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .guest-plan-card {
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .guest-plan-card:hover {
+      border-color: hsl(142, 35%, 42%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+
+    .plan-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .plan-card-header h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .plan-duration {
+      background: #f8f9fa;
+      color: #666;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .guest-plan-card p {
+      margin: 0 0 12px 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .guest-plan-btn {
+      background: hsl(142, 35%, 42%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .guest-plan-btn:hover {
+      background: hsl(142, 35%, 38%);
+    }
+
+    .guest-actions {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .signin-cta-btn {
+      background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .signin-cta-btn:hover {
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -398,8 +530,11 @@
         <div class="welcome-subtitle">
           Break your goals into steps and track your learning journey.
         </div>
-        <button class="start-btn" id="getStartedBtn">
-          Get Started
+        <button class="start-btn" id="beginLearningBtn">
+          Begin Learning
+        </button>
+        <button class="try-without-signin-btn" id="tryWithoutSigninBtn">
+          Try without signing in
         </button>
       </div>
     </div>
@@ -517,7 +652,60 @@
     </div>
   </div>
 
-  <script type="module" src="firebase.js"></script>
+  <!-- Guest Home Screen (No Signin Required) -->
+  <div id="guestHomeScreen" class="screen">
+    <div class="app-header">
+      <img src="logo.svg" alt="Eigenarc Logo" class="header-logo">
+      <div class="header-text">
+        <div class="logo">Eigenarc</div>
+        <div class="subtitle">Built for AI Native Learners</div>
+      </div>
+    </div>
+    <div class="screen-content">
+      <div class="guest-welcome">
+        <h3>Try Eigenarc Learning Plans</h3>
+        <p>Explore our sample courses below. <span class="signin-prompt">Sign in to create custom plans and access chat assistance.</span></p>
+      </div>
+      
+      <div class="guest-plans">
+        <div class="guest-plan-card" data-plan="fullstack">
+          <div class="plan-card-header">
+            <h4>Full-Stack Web Development</h4>
+            <span class="plan-duration">12 weeks</span>
+          </div>
+          <p>Master HTML, CSS, JavaScript, React, and Node.js</p>
+          <button class="guest-plan-btn">View Learning Path</button>
+        </div>
+        
+        <div class="guest-plan-card" data-plan="datascience">
+          <div class="plan-card-header">
+            <h4>Data Science Fundamentals</h4>
+            <span class="plan-duration">10 weeks</span>
+          </div>
+          <p>Python, statistics, data analysis, and machine learning</p>
+          <button class="guest-plan-btn">View Learning Path</button>
+        </div>
+        
+        <div class="guest-plan-card" data-plan="mobile">
+          <div class="plan-card-header">
+            <h4>Mobile App Development</h4>
+            <span class="plan-duration">8 weeks</span>
+          </div>
+          <p>Build iOS and Android apps with React Native</p>
+          <button class="guest-plan-btn">View Learning Path</button>
+        </div>
+      </div>
+      
+      <div class="guest-actions">
+        <button class="signin-cta-btn" id="guestSigninBtn">Sign in for Full Access</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="firebase.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
