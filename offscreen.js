@@ -8,16 +8,40 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log('Offscreen: Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
+// Signal that offscreen document is ready
+chrome.runtime.sendMessage({
+  action: 'offscreenReady'
+}).catch(error => {
+  console.error('Failed to signal ready:', error);
+});
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'signInWithGoogle' && message.target === 'offscreen') {
+  console.log('Offscreen received message:', message);
+  
+  if (message.action === 'doFirebaseAuth' && message.target === 'offscreen') {
     signInWithGoogle()
-      .then(sendResponse)
-      .catch(error => sendResponse({ success: false, error: error.message }));
+      .then(result => {
+        // Send result back to background script
+        chrome.runtime.sendMessage({
+          action: 'firebaseAuth',
+          result: result
+        });
+        sendResponse({ success: true });
+      })
+      .catch(error => {
+        const errorResult = { success: false, error: error.message };
+        chrome.runtime.sendMessage({
+          action: 'firebaseAuth', 
+          result: errorResult
+        });
+        sendResponse(errorResult);
+      });
     return true; // Keep message channel open for async response
   }
 });
