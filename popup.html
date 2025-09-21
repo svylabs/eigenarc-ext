@@ -9,20 +9,23 @@
       padding: 0;
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%);
+      background: #f8f9fa;
       overflow: hidden;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
 
     .screen {
       display: none;
       width: 100%;
       height: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      background: hsl(210, 40%, 98%);
+      background: white;
       position: absolute;
       top: 0;
       left: 0;
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     .screen.active {
@@ -30,10 +33,47 @@
       flex-direction: column;
     }
 
+    /* Header Component */
+    .app-header {
+      background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%);
+      color: white;
+      padding: 16px 20px;
+      border-bottom: 1px solid hsl(142, 35%, 35%);
+      text-align: center;
+    }
+    
+    .app-header .logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+    
+    .app-header .subtitle {
+      font-size: 11px;
+      opacity: 0.9;
+      margin: 2px 0 0 0;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .screen-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
     /* Welcome Screen */
     .welcome-content {
       text-align: center;
-      padding: 40px 20px;
+      padding: 60px 20px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .logo-container {
@@ -44,20 +84,21 @@
     }
 
     .logo-image {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 10px;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 12px;
     }
 
-    .logo-text {
-      font-size: 28px;
-      font-weight: bold;
+    .welcome-title {
+      font-size: 24px;
+      font-weight: 700;
       color: hsl(142, 35%, 42%);
-      margin: 0;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.5px;
     }
 
-    .tagline {
-      font-size: 16px;
+    .welcome-subtitle {
+      font-size: 14px;
       color: #666;
       margin-bottom: 40px;
       line-height: 1.5;
@@ -84,25 +125,17 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-    }
-
-    .chat-header {
-      background: hsl(142, 35%, 42%);
-      color: white;
-      padding: 15px;
-      margin: -20px -20px 20px -20px;
-      text-align: center;
-      font-weight: 600;
+      gap: 16px;
     }
 
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
-      background: hsl(142, 25%, 95%);
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid #e1e5e9;
       border-radius: 8px;
-      margin-bottom: 15px;
-      max-height: 300px;
+      min-height: 300px;
     }
 
     .message {
@@ -124,30 +157,46 @@
       text-align: right;
     }
 
+    .chat-input-container {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
     .chat-input {
-      width: 100%;
+      flex: 1;
+      height: 60px;
       padding: 12px;
-      border: 2px solid #e0e0e0;
+      border: 1px solid #e1e5e9;
       border-radius: 8px;
+      resize: none;
+      font-family: inherit;
       font-size: 14px;
-      resize: vertical;
-      min-height: 60px;
+      line-height: 1.4;
+      transition: border-color 0.2s;
     }
 
     .chat-input:focus {
       outline: none;
       border-color: hsl(142, 35%, 42%);
+      box-shadow: 0 0 0 3px hsl(142, 35%, 42%, 0.1);
     }
 
     .send-btn {
       background: hsl(142, 35%, 42%);
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       border-radius: 6px;
-      margin-top: 10px;
-      cursor: pointer;
+      font-size: 14px;
       font-weight: 600;
+      cursor: pointer;
+      height: 60px;
+      transition: background-color 0.2s;
+    }
+
+    .send-btn:hover {
+      background: hsl(142, 35%, 38%);
     }
 
     /* Signin Screen */
@@ -305,76 +354,94 @@
 <body>
   <!-- Welcome Screen -->
   <div id="welcomeScreen" class="screen active">
-    <div class="welcome-content">
-      <div class="logo-container">
-        <img src="logo.svg" alt="Eigenarc Logo" class="logo-image">
-        <div class="logo-text">Eigenarc</div>
+    <div class="app-header">
+      <div class="logo">Eigenarc</div>
+      <div class="subtitle">Built for AI Native Learners</div>
+    </div>
+    <div class="screen-content">
+      <div class="welcome-content">
+        <div class="logo-container">
+          <img src="logo.svg" alt="Eigenarc Logo" class="logo-image">
+          <div class="welcome-title">AI Learning Assistant</div>
+        </div>
+        <div class="welcome-subtitle">
+          Create personalized learning pathways for any goal
+        </div>
+        <button class="start-btn" id="getStartedBtn">
+          Get Started
+        </button>
       </div>
-      <div class="tagline">
-        Your AI Learning Assistant<br>
-        Create personalized learning pathways for any goal
-      </div>
-      <button class="start-btn" id="getStartedBtn">
-        Get Started
-      </button>
     </div>
   </div>
 
   <!-- Chat Screen -->
   <div id="chatScreen" class="screen">
-    <div class="chat-header">
-      Learning Goals Assistant
+    <div class="app-header">
+      <div class="logo">Eigenarc</div>
+      <div class="subtitle">Built for AI Native Learners</div>
     </div>
-    <div class="chat-container">
-      <div class="chat-messages" id="chatMessages">
-        <div class="message ai">
-          👋 Welcome to Eigenarc! I'm your AI Learning assistant. I'll help you create personalized learning materials and step-by-step pathways for any goal - whether you want to master new skills, launch a venture, change careers, or achieve personal milestones.
-          <br><br>
-          To get started, tell me:<br>
-          • What you want to achieve<br>
-          • Your current experience level<br>
-          • How much time you can dedicate daily<br>
-          • Your preferred learning style
+    <div class="screen-content">
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="message ai">
+            👋 Welcome to Eigenarc! I'm your AI Learning assistant. I'll help you create personalized learning materials and step-by-step pathways for any goal - whether you want to master new skills, launch a venture, change careers, or achieve personal milestones.
+            <br><br>
+            To get started, tell me:<br>
+            • What you want to achieve<br>
+            • Your current experience level<br>
+            • How much time you can dedicate daily<br>
+            • Your preferred learning style
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <textarea 
+            class="chat-input" 
+            id="chatInput" 
+            placeholder="Tell me about your learning goals..."></textarea>
+          <button class="send-btn" id="sendChatBtn">Send</button>
         </div>
       </div>
-      <textarea 
-        class="chat-input" 
-        id="chatInput" 
-        placeholder="Tell me about your learning goals..."></textarea>
-      <button class="send-btn" id="sendChatBtn">Send</button>
     </div>
   </div>
 
   <!-- Signin Screen -->
   <div id="signinScreen" class="screen">
-    <div class="signin-content">
-      <h2>Your Learning Plan is Ready!</h2>
-      <div class="plan-preview">
-        <div class="plan-title" id="generatedPlanTitle">Full-Stack Web Development Mastery</div>
-        <div class="plan-details" id="generatedPlanDetails">
-          A comprehensive 12-week program covering HTML, CSS, JavaScript, React, Node.js, and databases. 
-          Designed for beginners with 2 hours daily commitment.
+    <div class="app-header">
+      <div class="logo">Eigenarc</div>
+      <div class="subtitle">Built for AI Native Learners</div>
+    </div>
+    <div class="screen-content">
+      <div class="signin-content">
+        <h2>Your Learning Plan is Ready!</h2>
+        <div class="plan-preview">
+          <div class="plan-title" id="generatedPlanTitle">Full-Stack Web Development Mastery</div>
+          <div class="plan-details" id="generatedPlanDetails">
+            A comprehensive 12-week program covering HTML, CSS, JavaScript, React, Node.js, and databases. 
+            Designed for beginners with 2 hours daily commitment.
+          </div>
         </div>
+        <p>Sign in to save your personalized learning plan and start your journey!</p>
+        <button class="signin-btn" id="signinBtn">
+          Sign in with Google
+        </button>
       </div>
-      <p>Sign in to save your personalized learning plan and start your journey!</p>
-      <button class="signin-btn" id="signinBtn">
-        Sign in with Google
-      </button>
     </div>
   </div>
 
   <!-- Home Screen -->
   <div id="homeScreen" class="screen">
-    <div class="home-header">
-      Welcome back! 🎯
+    <div class="app-header">
+      <div class="logo">Eigenarc</div>
+      <div class="subtitle">Built for AI Native Learners</div>
     </div>
-    <div class="tabs">
-      <button class="tab active" id="currentPlanTabBtn" data-tab="currentPlan">Current Plan</button>
-      <button class="tab" id="createPlanTabBtn" data-tab="createPlan">Create Plan</button>
-    </div>
-    <div class="tab-content">
-      <!-- Current Plan Tab -->
-      <div id="currentPlanTab" class="tab-panel">
+    <div class="screen-content">
+      <div class="tabs">
+        <button class="tab active" id="currentPlanTabBtn" data-tab="currentPlan">Current Plan</button>
+        <button class="tab" id="createPlanTabBtn" data-tab="createPlan">Create Plan</button>
+      </div>
+      <div class="tab-content">
+        <!-- Current Plan Tab -->
+        <div id="currentPlanTab" class="tab-panel">
         <div class="plan-selector">
           <select class="plan-dropdown" id="planDropdown">
             <option value="fullstack">Full-Stack Web Development</option>
@@ -398,11 +465,13 @@
               Let's create a new learning plan! What would you like to learn next?
             </div>
           </div>
-          <textarea 
-            class="chat-input" 
-            id="createPlanInput" 
-            placeholder="Describe your new learning goal..."></textarea>
-          <button class="send-btn" id="sendCreatePlanBtn">Send Message</button>
+          <div class="chat-input-container">
+            <textarea 
+              class="chat-input" 
+              id="createPlanInput" 
+              placeholder="Describe your new learning goal..."></textarea>
+            <button class="send-btn" id="sendCreatePlanBtn">Send</button>
+          </div>
         </div>
       </div>
     </div>
