@@ -27,6 +27,7 @@ async function injectPrompt(prompt) {
       alert('Please navigate to ChatGPT first!');
       return;
     }
+    console.log('Injecting prompt into tab:', tab.id, 'URL:', tab.url, prompt);
     
     // Send message to content script
     await chrome.tabs.sendMessage(tab.id, {

@@ -1,10 +1,15 @@
+console.log('[ext] content loaded', { extId: chrome.runtime.id });
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('[ext] content got message:', request);
   if (request.action === 'injectPrompt') {
     injectPromptIntoTextarea(request.prompt);
     sendResponse({ success: true });
   }
 });
+
+console.log('content.js loaded');
 
 function injectPromptIntoTextarea(prompt) {
   // ChatGPT uses different selectors for the input area
@@ -29,6 +34,7 @@ function injectPromptIntoTextarea(prompt) {
       // Check if the element is visible and likely the main input
       if (element.offsetParent !== null && element.offsetHeight > 20) {
         inputElement = element;
+        console.log('Found input element with selector:', selector, element);
         break;
       }
     }
@@ -45,6 +51,8 @@ function injectPromptIntoTextarea(prompt) {
       // Trigger input events to notify React/Vue of the change
       inputElement.dispatchEvent(new Event('input', { bubbles: true }));
       inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+      console.log('Dispatched input and change events');
+      document.querySelector('[id="composer-submit-button"]')?.click();
     } else if (inputElement.contentEditable === 'true') {
       // For contenteditable elements (like ProseMirror)
       inputElement.focus();
@@ -54,14 +62,19 @@ function injectPromptIntoTextarea(prompt) {
         // Select all existing content and replace with new prompt
         document.execCommand('selectAll', false, null);
         document.execCommand('insertText', false, prompt);
+        console.log('Used execCommand to insert text');
         
         // Trigger input event for React/Vue
         inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        document.querySelector('[id="composer-submit-button"]')?.click();
       } catch (error) {
+        console.error('Error using execCommand:', error);
+        console.log('Falling back to textContent method.');
         // Fallback to textContent method
         inputElement.textContent = prompt;
         inputElement.dispatchEvent(new Event('input', { bubbles: true }));
         inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+        document.querySelector('[id="composer-submit-button"]')?.click();
       }
     }
     
