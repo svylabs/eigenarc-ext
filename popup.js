@@ -37,6 +37,54 @@ const samplePlans = {
   }
 };
 
+function sendChatMessage() {
+  console.log('Send Chat Message called');
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  // Add user message to chat
+  addMessageToChat('user', message, 'chatMessages');
+  input.value = '';
+  
+  // Store in chat history
+  chatHistory.push({ role: 'user', content: message });
+  
+  // Simulate AI response
+  setTimeout(() => {
+    const aiResponse = generatePlanResponse(message);
+    addMessageToChat('ai', aiResponse, 'chatMessages');
+    
+    // After AI response, show plan ready message
+    setTimeout(() => {
+      addMessageToChat('ai', "🎉 Perfect! I've created a personalized learning plan based on your goals. Let me show you what I've prepared...", 'chatMessages');
+      
+      setTimeout(() => {
+        showScreen('signinScreen');
+      }, 2000);
+    }, 1500);
+  }, 1000);
+}
+
+function sendCreatePlanMessage() {
+  const input = document.getElementById('createPlanInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  addMessageToChat('user', message, 'createPlanMessages');
+  input.value = '';
+  
+  setTimeout(() => {
+    addMessageToChat('ai', "Great! I'll create a new learning plan for you. This might take a moment...", 'createPlanMessages');
+    
+    setTimeout(() => {
+      addMessageToChat('ai', "✅ Your new learning plan is ready! You can now find it in your plan selector.", 'createPlanMessages');
+    }, 2000);
+  }, 1000);
+}
+
 function addMessageToChat(sender, message, containerId) {
   const container = document.getElementById(containerId);
   const messageDiv = document.createElement('div');
@@ -44,6 +92,54 @@ function addMessageToChat(sender, message, containerId) {
   messageDiv.innerHTML = message;
   container.appendChild(messageDiv);
   container.scrollTop = container.scrollHeight;
+}
+
+function signInWithFirebase() {
+  const signinBtn = document.querySelector('.signin-btn');
+  signinBtn.textContent = 'Signing in...';
+  signinBtn.disabled = true;
+  
+  setTimeout(() => {
+    // Simulate successful login
+    currentUser = {
+      email: 'user@example.com',
+      name: 'Demo User'
+    };
+    
+    // Save user to storage for persistence
+    chrome.storage.local.set({ currentUser });
+    
+    // Navigate to home screen
+    showScreen('homeScreen');
+  }, 2000);
+}
+
+function switchTab(tabName, element) {
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  element.classList.add('active');
+  
+  // Show/hide tab content
+  if (tabName === 'currentPlan') {
+    document.getElementById('currentPlanTab').classList.remove('hidden');
+    document.getElementById('createPlanTab').classList.add('hidden');
+  } else if (tabName === 'createPlan') {
+    document.getElementById('currentPlanTab').classList.add('hidden');
+    document.getElementById('createPlanTab').classList.remove('hidden');
+  }
+}
+
+function loadSelectedPlan() {
+  const dropdown = document.getElementById('planDropdown');
+  const selectedPlan = dropdown.value;
+  const plan = samplePlans[selectedPlan];
+  
+  if (!plan) return;
+  
+  currentPlan = plan;
+  renderLessonsTable(plan.lessons);
 }
 
 function generatePlanResponse(userMessage) {
@@ -161,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
-  document.getElementById('backToWelcomeBtn').addEventListener('click', () => showScreen('welcomeScreen'));
   document.getElementById('signinBtn').addEventListener('click', signInWithFirebase);
   document.getElementById('backToChatBtn').addEventListener('click', () => showScreen('chatScreen'));
   document.getElementById('sendCreatePlanBtn').addEventListener('click', sendCreatePlanMessage);
