@@ -16,7 +16,7 @@ function injectPromptIntoTextarea(prompt) {
   // Try multiple selectors to find the input field
   const selectors = [
     '[data-id="root"] textarea',
-    '#prompt-textarea',
+    '[id="prompt-textarea"]',
     'textarea[placeholder*="Message"]',
     'textarea[data-id]',
     '.ProseMirror',
@@ -52,7 +52,9 @@ function injectPromptIntoTextarea(prompt) {
       inputElement.dispatchEvent(new Event('input', { bubbles: true }));
       inputElement.dispatchEvent(new Event('change', { bubbles: true }));
       console.log('Dispatched input and change events');
-      document.querySelector('[id="composer-submit-button"]')?.click();
+      setTimeout(() => 
+          document.querySelector('[id="composer-submit-button"]')?.click()
+        , 1200);
     } else if (inputElement.contentEditable === 'true') {
       // For contenteditable elements (like ProseMirror)
       inputElement.focus();
@@ -60,13 +62,18 @@ function injectPromptIntoTextarea(prompt) {
       // Try modern approach first
       try {
         // Select all existing content and replace with new prompt
-        document.execCommand('selectAll', false, null);
-        document.execCommand('insertText', false, prompt);
+       // document.execCommand('selectAll', false, null);
+       // document.execCommand('insertText', false, prompt);
         console.log('Used execCommand to insert text');
+        inputElement.textContent = prompt;
         
         // Trigger input event for React/Vue
         inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-        document.querySelector('[id="composer-submit-button"]')?.click();
+        inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+        setTimeout(() => 
+          document.querySelector('[id="composer-submit-button"]')?.click()
+        , 1200);
+        
       } catch (error) {
         console.error('Error using execCommand:', error);
         console.log('Falling back to textContent method.');
@@ -74,7 +81,9 @@ function injectPromptIntoTextarea(prompt) {
         inputElement.textContent = prompt;
         inputElement.dispatchEvent(new Event('input', { bubbles: true }));
         inputElement.dispatchEvent(new Event('change', { bubbles: true }));
-        document.querySelector('[id="composer-submit-button"]')?.click();
+        setTimeout(() => 
+          document.querySelector('[id="composer-submit-button"]')?.click()
+        , 1200);
       }
     }
     
