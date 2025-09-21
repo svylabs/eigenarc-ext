@@ -1,3 +1,114 @@
+// Make functions globally available for onclick handlers
+window.showScreen = function(screenId) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.remove('active');
+  });
+  
+  // Show target screen
+  document.getElementById(screenId).classList.add('active');
+  
+  // Special handling for different screens
+  if (screenId === 'homeScreen') {
+    loadCurrentPlan();
+  }
+};
+
+window.sendChatMessage = function() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  // Add user message to chat
+  addMessageToChat('user', message, 'chatMessages');
+  input.value = '';
+  
+  // Store in chat history
+  chatHistory.push({ role: 'user', content: message });
+  
+  // Simulate AI response
+  setTimeout(() => {
+    const aiResponse = generatePlanResponse(message);
+    addMessageToChat('ai', aiResponse, 'chatMessages');
+    
+    // After AI response, show plan ready message
+    setTimeout(() => {
+      addMessageToChat('ai', "🎉 Perfect! I've created a personalized learning plan based on your goals. Let me show you what I've prepared...", 'chatMessages');
+      
+      setTimeout(() => {
+        window.showScreen('signinScreen');
+      }, 2000);
+    }, 1500);
+  }, 1000);
+};
+
+window.signInWithFirebase = function() {
+  const signinBtn = document.querySelector('.signin-btn');
+  signinBtn.textContent = 'Signing in...';
+  signinBtn.disabled = true;
+  
+  setTimeout(() => {
+    // Simulate successful login
+    currentUser = {
+      email: 'user@example.com',
+      name: 'Demo User'
+    };
+    
+    // Save user to storage for persistence
+    chrome.storage.local.set({ currentUser });
+    
+    // Navigate to home screen
+    window.showScreen('homeScreen');
+  }, 2000);
+};
+
+window.switchTab = function(tabName, element) {
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  element.classList.add('active');
+  
+  // Show/hide tab content
+  if (tabName === 'currentPlan') {
+    document.getElementById('currentPlanTab').classList.remove('hidden');
+    document.getElementById('createPlanTab').classList.add('hidden');
+  } else if (tabName === 'createPlan') {
+    document.getElementById('currentPlanTab').classList.add('hidden');
+    document.getElementById('createPlanTab').classList.remove('hidden');
+  }
+};
+
+window.loadSelectedPlan = function() {
+  const dropdown = document.getElementById('planDropdown');
+  const selectedPlan = dropdown.value;
+  const plan = samplePlans[selectedPlan];
+  
+  if (!plan) return;
+  
+  currentPlan = plan;
+  renderLessonsTable(plan.lessons);
+};
+
+window.sendCreatePlanMessage = function() {
+  const input = document.getElementById('createPlanInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  addMessageToChat('user', message, 'createPlanMessages');
+  input.value = '';
+  
+  setTimeout(() => {
+    addMessageToChat('ai', "Great! I'll create a new learning plan for you. This might take a moment...", 'createPlanMessages');
+    
+    setTimeout(() => {
+      addMessageToChat('ai', "✅ Your new learning plan is ready! You can now find it in your plan selector.", 'createPlanMessages');
+    }, 2000);
+  }, 1000);
+};
+
 // Global state management
 let currentUser = null;
 let currentPlan = null;
@@ -36,70 +147,6 @@ const samplePlans = {
   }
 };
 
-// Screen Navigation
-function showScreen(screenId) {
-  // Hide all screens
-  document.querySelectorAll('.screen').forEach(screen => {
-    screen.classList.remove('active');
-  });
-  
-  // Show target screen
-  document.getElementById(screenId).classList.add('active');
-  
-  // Special handling for different screens
-  if (screenId === 'homeScreen') {
-    loadCurrentPlan();
-  }
-}
-
-// Chat functionality
-function sendChatMessage() {
-  const input = document.getElementById('chatInput');
-  const message = input.value.trim();
-  
-  if (!message) return;
-  
-  // Add user message to chat
-  addMessageToChat('user', message, 'chatMessages');
-  input.value = '';
-  
-  // Store in chat history
-  chatHistory.push({ role: 'user', content: message });
-  
-  // Simulate AI response (in real implementation, this would call your backend)
-  setTimeout(() => {
-    const aiResponse = generatePlanResponse(message);
-    addMessageToChat('ai', aiResponse, 'chatMessages');
-    
-    // After AI response, show plan ready message
-    setTimeout(() => {
-      addMessageToChat('ai', "🎉 Perfect! I've created a personalized learning plan based on your goals. Let me show you what I've prepared...", 'chatMessages');
-      
-      setTimeout(() => {
-        showScreen('signinScreen');
-      }, 2000);
-    }, 1500);
-  }, 1000);
-}
-
-function sendCreatePlanMessage() {
-  const input = document.getElementById('createPlanInput');
-  const message = input.value.trim();
-  
-  if (!message) return;
-  
-  addMessageToChat('user', message, 'createPlanMessages');
-  input.value = '';
-  
-  setTimeout(() => {
-    addMessageToChat('ai', "Great! I'll create a new learning plan for you. This might take a moment...", 'createPlanMessages');
-    
-    setTimeout(() => {
-      addMessageToChat('ai', "✅ Your new learning plan is ready! You can now find it in your plan selector.", 'createPlanMessages');
-    }, 2000);
-  }, 1000);
-}
-
 function addMessageToChat(sender, message, containerId) {
   const container = document.getElementById(containerId);
   const messageDiv = document.createElement('div');
@@ -122,65 +169,12 @@ function generatePlanResponse(userMessage) {
   }
 }
 
-// Firebase Authentication (Mock implementation)
-function signInWithFirebase() {
-  // In real implementation, this would use Firebase Auth
-  // For now, we'll simulate successful authentication
-  
-  const signinBtn = document.querySelector('.signin-btn');
-  signinBtn.textContent = 'Signing in...';
-  signinBtn.disabled = true;
-  
-  setTimeout(() => {
-    // Simulate successful login
-    currentUser = {
-      email: 'user@example.com',
-      name: 'Demo User'
-    };
-    
-    // Save user to storage for persistence
-    chrome.storage.local.set({ currentUser });
-    
-    // Navigate to home screen
-    showScreen('homeScreen');
-  }, 2000);
-}
-
-// Tab Management
-function switchTab(tabName, element) {
-  // Update tab buttons
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.classList.remove('active');
-  });
-  element.classList.add('active');
-  
-  // Show/hide tab content
-  if (tabName === 'currentPlan') {
-    document.getElementById('currentPlanTab').classList.remove('hidden');
-    document.getElementById('createPlanTab').classList.add('hidden');
-  } else if (tabName === 'createPlan') {
-    document.getElementById('currentPlanTab').classList.add('hidden');
-    document.getElementById('createPlanTab').classList.remove('hidden');
-  }
-}
-
 // Plan Management
 function loadCurrentPlan() {
   const dropdown = document.getElementById('planDropdown');
   if (dropdown) {
-    loadSelectedPlan();
+    window.loadSelectedPlan();
   }
-}
-
-function loadSelectedPlan() {
-  const dropdown = document.getElementById('planDropdown');
-  const selectedPlan = dropdown.value;
-  const plan = samplePlans[selectedPlan];
-  
-  if (!plan) return;
-  
-  currentPlan = plan;
-  renderLessonsTable(plan.lessons);
 }
 
 function renderLessonsTable(lessons) {
@@ -246,7 +240,7 @@ function showNotification(message) {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #4caf50;
+    background: hsl(142, 35%, 42%);
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
@@ -272,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.local.get(['currentUser'], (result) => {
     if (result.currentUser) {
       currentUser = result.currentUser;
-      showScreen('homeScreen');
+      window.showScreen('homeScreen');
     }
   });
 });
