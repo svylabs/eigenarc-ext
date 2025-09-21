@@ -1,31 +1,11 @@
-// Firebase authentication via offscreen document - Chrome extension compatible
+// Firebase authentication bridge for Chrome extension popup
 console.log('Firebase auth bridge loading...');
-
-// Create offscreen document if needed
-async function ensureOffscreenDocument() {
-  const existingContexts = await chrome.runtime.getContexts({
-    contextTypes: ['OFFSCREEN_DOCUMENT'],
-    documentUrls: [chrome.runtime.getURL('offscreen.html')]
-  });
-
-  if (existingContexts.length > 0) {
-    return;
-  }
-
-  await chrome.offscreen.createDocument({
-    url: 'offscreen.html',
-    reasons: ['DOM_SCRAPING'], // Required reason
-    justification: 'Firebase authentication'
-  });
-}
 
 // Export auth functions for use in popup.js
 window.firebaseAuth = {
   signInWithGoogle: async () => {
     try {
-      await ensureOffscreenDocument();
-      
-      // Send message to offscreen document to handle auth
+      // Send message to background script which handles offscreen document
       const response = await chrome.runtime.sendMessage({
         action: 'signInWithGoogle'
       });

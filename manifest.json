@@ -8,6 +8,9 @@
     "https://chatgpt.com/*",
     "https://eigenarc.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://chat.openai.com/*", "https://chatgpt.com/*"],
@@ -20,7 +23,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["firebase.js", "offscreen.html", "offscreen.js"],
+      "resources": ["firebase.js", "offscreen.html", "offscreen.js", "background.js"],
       "matches": ["<all_urls>"]
     }
   ],

@@ -12,9 +12,9 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// Listen for messages from popup
+// Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'signInWithGoogle') {
+  if (message.action === 'signInWithGoogle' && message.target === 'offscreen') {
     signInWithGoogle()
       .then(sendResponse)
       .catch(error => sendResponse({ success: false, error: error.message }));
