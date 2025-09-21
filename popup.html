@@ -11,9 +11,9 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #f8f9fa;
       overflow: hidden;
-      border: 1px solid #e0e0e0;
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      clip-path: inset(0 round 12px);
     }
 
     .screen {
@@ -24,7 +24,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      border-radius: 12px;
       overflow: hidden;
     }
 
@@ -39,6 +38,19 @@
       color: white;
       padding: 16px 20px;
       border-bottom: 1px solid hsl(142, 35%, 35%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .app-header .header-logo {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    
+    .app-header .header-text {
       text-align: center;
     }
     
@@ -355,17 +367,20 @@
   <!-- Welcome Screen -->
   <div id="welcomeScreen" class="screen active">
     <div class="app-header">
-      <div class="logo">Eigenarc</div>
-      <div class="subtitle">Built for AI Native Learners</div>
+      <img src="logo.svg" alt="Eigenarc Logo" class="header-logo">
+      <div class="header-text">
+        <div class="logo">Eigenarc</div>
+        <div class="subtitle">Built for AI Native Learners</div>
+      </div>
     </div>
     <div class="screen-content">
       <div class="welcome-content">
         <div class="logo-container">
           <img src="logo.svg" alt="Eigenarc Logo" class="logo-image">
-          <div class="welcome-title">AI Learning Assistant</div>
+          <div class="welcome-title">From AI chats to real progress.</div>
         </div>
         <div class="welcome-subtitle">
-          Create personalized learning pathways for any goal
+          Break your goals into steps and track your learning journey.
         </div>
         <button class="start-btn" id="getStartedBtn">
           Get Started
@@ -377,8 +392,11 @@
   <!-- Chat Screen -->
   <div id="chatScreen" class="screen">
     <div class="app-header">
-      <div class="logo">Eigenarc</div>
-      <div class="subtitle">Built for AI Native Learners</div>
+      <img src="logo.svg" alt="Eigenarc Logo" class="header-logo">
+      <div class="header-text">
+        <div class="logo">Eigenarc</div>
+        <div class="subtitle">Built for AI Native Learners</div>
+      </div>
     </div>
     <div class="screen-content">
       <div class="chat-container">
@@ -407,8 +425,11 @@
   <!-- Signin Screen -->
   <div id="signinScreen" class="screen">
     <div class="app-header">
-      <div class="logo">Eigenarc</div>
-      <div class="subtitle">Built for AI Native Learners</div>
+      <img src="logo.svg" alt="Eigenarc Logo" class="header-logo">
+      <div class="header-text">
+        <div class="logo">Eigenarc</div>
+        <div class="subtitle">Built for AI Native Learners</div>
+      </div>
     </div>
     <div class="screen-content">
       <div class="signin-content">
@@ -431,8 +452,11 @@
   <!-- Home Screen -->
   <div id="homeScreen" class="screen">
     <div class="app-header">
-      <div class="logo">Eigenarc</div>
-      <div class="subtitle">Built for AI Native Learners</div>
+      <img src="logo.svg" alt="Eigenarc Logo" class="header-logo">
+      <div class="header-text">
+        <div class="logo">Eigenarc</div>
+        <div class="subtitle">Built for AI Native Learners</div>
+      </div>
     </div>
     <div class="screen-content">
       <div class="tabs">
