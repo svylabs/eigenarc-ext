@@ -835,6 +835,18 @@ function showCourseDetail(course, save=true) {
     ${phasesHtml}
   `;
   
+  // Restore scroll position when navigating to course details
+  setTimeout(() => {
+    const scrollableElement = getScrollableElement();
+    const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
+    
+    console.log('🔄 Restoring scroll in showCourseDetails to position:', savedPosition);
+    
+    if (savedPosition > 0) {
+      scrollableElement.scrollTop = savedPosition;
+      console.log('✅ Course detail scroll restored');
+    }
+  }, 100);
 }
 
 // Function to inject task-specific prompt into ChatGPT
