@@ -4,6 +4,11 @@ let currentUser = null;
 let currentPlan = null;
 let chatHistory = [];
 let currentScreen = 'welcomeScreen';
+let currentViewState = {
+  view: 'pathwaysList', // 'pathwaysList' or 'courseDetail'
+  courseId: null,
+  scrollPosition: 0
+};
 let currentTab = 'currentPlan';
 
 // Sample learning plans data
@@ -646,9 +651,22 @@ function showCourseDetail(course) {
   
   if (!courseDetailView || !courseDetailContent) return;
   
+  // Save current scroll position before switching views
+  saveScrollPosition();
+  
   // Hide pathways list and show detail view
   if (pathwaysList) pathwaysList.style.display = 'none';
   courseDetailView.style.display = 'block';
+  
+  // Update view state
+  currentViewState = {
+    view: 'courseDetail',
+    courseId: course.id,
+    scrollPosition: 0
+  };
+  
+  // Save state to storage
+  saveViewState();
   
   // Parse phases from JSON string if needed
   let phases = [];
@@ -795,6 +813,11 @@ function showCourseDetail(course) {
     </div>
     ${phasesHtml}
   `;
+  
+  // Restore scroll position after content is loaded
+  setTimeout(() => {
+    restoreScrollPosition();
+  }, 100);
 }
 
 // Function to go back to pathways list
@@ -802,8 +825,22 @@ function backToPathways() {
   const pathwaysList = document.getElementById('pathwaysList');
   const courseDetailView = document.getElementById('courseDetailView');
   
+  // Save current scroll position before switching views
+  saveScrollPosition();
+  
   if (courseDetailView) courseDetailView.style.display = 'none';
   if (pathwaysList) pathwaysList.style.display = 'block';
+  
+  // Update view state
+  currentViewState = {
+    view: 'pathwaysList',
+    courseId: null,
+    scrollPosition: 0
+  };
+  
+  // Save state and restore scroll position
+  saveViewState();
+  restoreScrollPosition();
 }
 
 // Function to refresh pathways
@@ -826,10 +863,12 @@ async function refreshPathways() {
     }
     
     // Force refresh by clearing cache and fetching fresh data
-    const user = await getCurrentUser();
-    if (user && user.idToken) {
-      clearUserCoursesCache(user.uid);
-      await loadUserCourses(user);
+    if (currentUser) {
+      clearUserCoursesCache(currentUser.uid || currentUser.email);
+      await fetchUserCourses();
+      
+      // Refresh the pathways view
+      updateMyPathwaysView();
     }
   } catch (error) {
     console.error('Error refreshing pathways:', error);
@@ -844,6 +883,55 @@ async function refreshPathways() {
       refreshBtn.style.opacity = '1';
       refreshBtn.style.cursor = 'pointer';
     }
+  }
+}
+
+// View state persistence functions
+function saveViewState() {
+  chrome.storage.local.set({ 
+    currentViewState: currentViewState 
+  });
+}
+
+function saveScrollPosition() {
+  const scrollableElement = document.documentElement || document.body;
+  currentViewState.scrollPosition = scrollableElement.scrollTop;
+  saveViewState();
+}
+
+function restoreScrollPosition() {
+  setTimeout(() => {
+    const scrollableElement = document.documentElement || document.body;
+    scrollableElement.scrollTop = currentViewState.scrollPosition || 0;
+  }, 50);
+}
+
+async function restoreViewState() {
+  try {
+    const result = await chrome.storage.local.get(['currentViewState']);
+    if (result.currentViewState) {
+      currentViewState = result.currentViewState;
+      
+      // If we were in course detail view, restore it
+      if (currentViewState.view === 'courseDetail' && currentViewState.courseId && currentUser) {
+        // Fetch courses to find the specific course
+        const courses = await fetchUserCourses();
+        if (courses) {
+          const course = courses.find(c => c.id === currentViewState.courseId);
+          if (course) {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+              showCourseDetail(course);
+            }, 200);
+          }
+        }
+      } else {
+        // Restore scroll position for pathways list
+        restoreScrollPosition();
+      }
+    }
+  } catch (error) {
+    console.error('Error restoring view state:', error);
   }
 }
 
@@ -1421,6 +1509,21 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Add scroll position tracking
+    const trackScrollPosition = () => {
+      saveScrollPosition();
+    };
+    
+    // Track scroll position periodically (throttled)
+    let scrollTimeout;
+    document.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(trackScrollPosition, 250);
+    });
+    
+    // Save position when popup is about to close
+    window.addEventListener('beforeunload', saveScrollPosition);
+
     // Settings dropdown event listeners
     const settingsBtn = document.getElementById('settingsBtn');
     const dropdownMenu = document.getElementById('dropdownMenu');
@@ -1535,6 +1638,11 @@ document.addEventListener('DOMContentLoaded', () => {
       await chrome.storage.local.remove(['currentUser']);
     } else {
       console.log('No saved user state found');
+    }
+    
+    // Restore view state after user is loaded
+    if (currentUser) {
+      await restoreViewState();
     }
     
     // Set default tab based on authentication status
