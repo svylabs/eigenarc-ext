@@ -913,37 +913,70 @@ Generate the learning materials following the system instructions.`;
   chrome.tabs.query({ url: "*://chatgpt.com/*" }, (tabs) => {
     if (tabs.length > 0) {
       console.log(`Found ${tabs.length} ChatGPT tab(s), injecting prompt...`);
-      tabs.forEach(tab => {
+      let successfulInjections = 0;
+      let failedTabs = [];
+      
+      tabs.forEach((tab, index) => {
         chrome.tabs.sendMessage(tab.id, {
           action: 'injectPrompt',
           prompt: prompt
         }, (response) => {
           if (chrome.runtime.lastError) {
-            console.log('Could not inject into tab:', chrome.runtime.lastError.message);
+            console.log(`❌ Could not inject into tab ${tab.id}:`, chrome.runtime.lastError.message);
+            failedTabs.push(tab);
+            
+            // If this was the last tab to try, handle failures
+            if (index === tabs.length - 1) {
+              if (successfulInjections === 0 && failedTabs.length > 0) {
+                console.log('🔄 All tabs failed, trying to reload content script or creating new tab...');
+                // Try reloading the first failed tab's content script
+                chrome.tabs.reload(failedTabs[0].id, () => {
+                  setTimeout(() => {
+                    chrome.tabs.sendMessage(failedTabs[0].id, {
+                      action: 'injectPrompt',
+                      prompt: prompt
+                    }, (response) => {
+                      if (chrome.runtime.lastError) {
+                        console.log('🆕 Reload failed, creating new ChatGPT tab...');
+                        createNewChatGPTTab(prompt);
+                      } else {
+                        console.log('✅ Prompt injected after tab reload!');
+                      }
+                    });
+                  }, 2000);
+                });
+              }
+            }
           } else {
-            console.log('✅ Prompt injected successfully into ChatGPT tab');
+            successfulInjections++;
+            console.log(`✅ Prompt injected successfully into ChatGPT tab ${tab.id}`);
           }
         });
       });
     } else {
       console.log('No ChatGPT tabs found, opening new tab...');
-      chrome.tabs.create({ url: 'https://chatgpt.com/' }, (newTab) => {
-        console.log('Created new ChatGPT tab, waiting for load...');
-        // Wait for tab to load before injecting
-        setTimeout(() => {
-          chrome.tabs.sendMessage(newTab.id, {
-            action: 'injectPrompt',
-            prompt: prompt
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.log('Could not inject into new tab:', chrome.runtime.lastError.message);
-            } else {
-              console.log('✅ Prompt injected successfully into new ChatGPT tab');
-            }
-          });
-        }, 3000);
-      });
+      createNewChatGPTTab(prompt);
     }
+  });
+}
+
+function createNewChatGPTTab(prompt) {
+  chrome.tabs.create({ url: 'https://chatgpt.com/' }, (newTab) => {
+    console.log('Created new ChatGPT tab, waiting for load...');
+    // Wait for tab to load before injecting
+    setTimeout(() => {
+      chrome.tabs.sendMessage(newTab.id, {
+        action: 'injectPrompt',
+        prompt: prompt
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.log('❌ Could not inject into new tab:', chrome.runtime.lastError.message);
+          console.log('💡 Please refresh the ChatGPT tab and try again');
+        } else {
+          console.log('✅ Prompt injected successfully into new ChatGPT tab');
+        }
+      });
+    }, 3000);
   });
 }
 
