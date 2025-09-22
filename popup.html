@@ -614,8 +614,8 @@
           cursor: pointer; 
           display: flex; 
           align-items: center; 
-          gap: 8px;
-          padding: 8px 12px;
+          gap: 4px;
+          padding: 6px;
           border-radius: 20px;
           transition: background-color 0.2s;
         ">
@@ -631,8 +631,7 @@
             font-weight: 600;
             font-size: 14px;
           " id="profileAvatar">U</div>
-          <span class="profile-name" style="color: #333; font-size: 14px; font-weight: 500;" id="profileName">User</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
             <polyline points="6,9 12,15 18,9"></polyline>
           </svg>
         </button>
@@ -709,13 +708,13 @@
           </div>
           
           <!-- Loading pathways view -->
-          <div id="pathwaysLoading" style="display: none; text-align: center; padding: 40px 20px;">
+          <div id="pathwaysLoading" style="display: none; text-align: center; padding: 20px 20px;">
             <p style="color: #666;">Loading your pathways...</p>
           </div>
           
           <!-- Signed in with pathways view -->
-          <div id="pathwaysList" style="display: none; padding: 16px;">
-            <div style="margin-bottom: 16px;">
+          <div id="pathwaysList" style="display: none; padding: 16px 16px 16px 16px; padding-top: 8px;">
+            <div style="margin-bottom: 12px;">
               <h3 style="color: hsl(142, 35%, 42%); margin: 0; font-size: 18px;" id="pathwaysHeader">My Learning Pathways</h3>
               <p style="color: #666; font-size: 13px; margin: 4px 0 0 0;" id="pathwaysCount">Loading...</p>
             </div>
@@ -723,8 +722,8 @@
           </div>
           
           <!-- Signed in but no pathways view -->
-          <div id="pathwaysEmpty" class="no-pathways-message" style="display: none;">
-            <p style="text-align: center; color: #666; margin: 40px 0;">
+          <div id="pathwaysEmpty" class="no-pathways-message" style="display: none; padding-top: 8px;">
+            <p style="text-align: center; color: #666; margin: 20px 0;">
               No pathways yet.<br>
               <a href="#" id="checkExamplesLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Check examples</a> or create your first learning plan.
             </p>

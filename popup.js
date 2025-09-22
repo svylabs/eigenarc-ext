@@ -761,11 +761,8 @@ function updateProfileInfo() {
   const profileEmail = currentUser.email || '';
   const initials = getInitials(profileName);
   
-  // Update small profile elements
-  const profileNameEl = document.getElementById('profileName');
+  // Update header profile avatar only (no name displayed)
   const profileAvatarEl = document.getElementById('profileAvatar');
-  
-  if (profileNameEl) profileNameEl.textContent = profileName;
   if (profileAvatarEl) profileAvatarEl.textContent = initials;
   
   // Update dropdown profile elements
