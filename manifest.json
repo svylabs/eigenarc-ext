@@ -32,7 +32,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "permissions": [
     "tabs", 
