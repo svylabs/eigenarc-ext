@@ -279,6 +279,32 @@
       transform: translateY(0);
     }
 
+    .new-conversation-btn {
+      background: transparent;
+      color: #666;
+      border: 1px solid #e1e5e9;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+      align-self: flex-end;
+    }
+
+    .new-conversation-btn:hover {
+      background: #f8f9fa;
+      border-color: hsl(142, 35%, 42%);
+      color: hsl(142, 35%, 42%);
+    }
+
+    .chat-header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 0 8px 0;
+    }
+
     /* Signin Screen */
     .signin-content {
       text-align: center;
@@ -610,6 +636,11 @@
     </div>
     <div class="screen-content">
       <div class="chat-container">
+        <div class="chat-header">
+          <button class="new-conversation-btn" id="newConversationBtn">
+            ✨ New Conversation
+          </button>
+        </div>
         <div class="chat-messages" id="chatMessages">
           <div class="message ai">
             👋 Welcome to Eigenarc! I'm your AI Learning assistant. I'll help you create personalized learning materials and step-by-step pathways for any goal - whether you want to master new skills, launch a venture, change careers, or achieve personal milestones.
@@ -845,6 +876,11 @@
       <!-- Create Plan Tab -->
       <div id="createPlanTab" class="tab-panel hidden">
         <div id="createPlanSignedIn" class="chat-container">
+          <div class="chat-header">
+            <button class="new-conversation-btn" id="newCreatePlanConversationBtn">
+              ✨ New Conversation
+            </button>
+          </div>
           <div class="chat-messages" id="createPlanMessages">
             <div class="message ai">
               Let's create a new learning plan! What would you like to learn next?

@@ -372,7 +372,7 @@ function addMessageToChat(sender, message, containerId) {
   
   // Save message to conversation history
   if (currentConversationId && sender !== 'system') {
-    saveMessageToHistory(sender, message);
+    saveMessageToHistory(sender, message, 'text');
   }
 }
 
@@ -547,6 +547,43 @@ async function displayGeneratedPlanFromHistory(planData, container) {
     errorDiv.className = 'message ai';
     errorDiv.textContent = '⚠️ Error loading previously generated plan.';
     container.appendChild(errorDiv);
+  }
+}
+
+// Start a new conversation
+async function startNewConversation(containerId) {
+  try {
+    console.log('🆕 Starting new conversation');
+    
+    // Clear current conversation state
+    currentConversationId = null;
+    generatedPlanId = null;
+    
+    // Clear chat messages but preserve welcome message
+    const container = document.getElementById(containerId);
+    const welcomeMessage = container.querySelector('.message.ai');
+    const welcomeMessageHtml = welcomeMessage?.outerHTML;
+    container.innerHTML = '';
+    
+    // Restore welcome message if it existed
+    if (welcomeMessageHtml) {
+      container.innerHTML = welcomeMessageHtml;
+    }
+    
+    // Clear conversation from storage
+    await chrome.storage.local.set({ 
+      lastConversationId: null
+    });
+    
+    console.log('✅ New conversation ready');
+    
+    // Show confirmation message
+    setTimeout(() => {
+      addMessageToChat('ai', '💫 Started a new conversation! What would you like to learn today?', containerId);
+    }, 500);
+    
+  } catch (error) {
+    console.error('Error starting new conversation:', error);
   }
 }
 
@@ -2741,6 +2778,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sendCreatePlanBtn = document.getElementById('sendCreatePlanBtn');
   if (sendCreatePlanBtn) {
     sendCreatePlanBtn.addEventListener('click', sendCreatePlanMessage);
+  }
+  
+  // New conversation buttons
+  const newConversationBtn = document.getElementById('newConversationBtn');
+  if (newConversationBtn) {
+    newConversationBtn.addEventListener('click', () => {
+      startNewConversation('chatMessages');
+    });
+  }
+  
+  const newCreatePlanConversationBtn = document.getElementById('newCreatePlanConversationBtn');
+  if (newCreatePlanConversationBtn) {
+    newCreatePlanConversationBtn.addEventListener('click', () => {
+      startNewConversation('createPlanMessages');
+    });
   }
   
   // Add keyboard support for chat input
