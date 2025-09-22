@@ -1318,6 +1318,13 @@ window.signOutUser = async function() {
       // Reset current user
       currentUser = null;
       
+      // Clear current view state
+      currentViewState = {
+        view: 'pathwaysList',
+        courseId: null,
+        scrollPosition: 0
+      };
+      
       // Refresh the UI to show signed out state
       showScreen('homeScreen');
       
