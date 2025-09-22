@@ -3,11 +3,11 @@ console.log('Firebase auth loading...');
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAkXsTa7_j8ZlLe8rBY7gUdvR7s3z1P2vE",
-  authDomain: "eigenarc-ai.firebaseapp.com", 
-  projectId: "eigenarc-ai",
-  storageBucket: "eigenarc-ai.firebasestorage.app",
-  appId: "1:123456789:web:abcdef1234567890"
+  apiKey: "AIzaSyAu9FxC6G8fOpNaxK_9gR1XpJHFo_vyH68",
+  authDomain: "eigenarc.firebaseapp.com", 
+  projectId: "eigenarc",
+  storageBucket: "eigenarc.firebasestorage.app",
+  appId: "1:1028034416026:web:e7d6d41d22e6d14f02fe23"
 };
 
 // Initialize Firebase (loaded from local files)
