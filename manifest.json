@@ -8,7 +8,9 @@
     "https://chatgpt.com/*",
     "https://eigenarc.com/*",
     "https://*.firebaseio.com/*",
-    "https://www.googleapis.com/*"
+    "https://www.googleapis.com/*",
+    "https://securetoken.googleapis.com/*",
+    "https://identitytoolkit.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -25,18 +27,17 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["firebase.js", "offscreen.html", "offscreen.js", "background.js"],
+      "resources": ["firebase.js"],
       "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'"
   },
   "permissions": [
     "tabs", 
     "storage",
-    "identity",
-    "offscreen"
+    "identity"
   ],
   "oauth2": {
     "client_id": "525622998725-l4kl6l3dd2252bqq6p56omtmtjr5tupl.apps.googleusercontent.com",
