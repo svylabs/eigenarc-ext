@@ -15,37 +15,37 @@ const samplePlans = {
       {
         title: "Frontend Fundamentals",
         lessons: [
-          { title: "HTML Structure and Semantics" },
-          { title: "CSS Styling and Layout" },
-          { title: "JavaScript Basics and ES6" },
-          { title: "DOM Manipulation" }
+          { id: "fs-1-1", title: "HTML Structure and Semantics" },
+          { id: "fs-1-2", title: "CSS Styling and Layout" },
+          { id: "fs-1-3", title: "JavaScript Basics and ES6" },
+          { id: "fs-1-4", title: "DOM Manipulation" }
         ]
       },
       {
         title: "Frontend Frameworks",
         lessons: [
-          { title: "React Components and JSX" },
-          { title: "State Management with Hooks" },
-          { title: "React Router and Navigation" },
-          { title: "API Integration" }
+          { id: "fs-2-1", title: "React Components and JSX" },
+          { id: "fs-2-2", title: "State Management with Hooks" },
+          { id: "fs-2-3", title: "React Router and Navigation" },
+          { id: "fs-2-4", title: "API Integration" }
         ]
       },
       {
         title: "Backend Development",
         lessons: [
-          { title: "Node.js and Express Setup" },
-          { title: "RESTful API Design" },
-          { title: "Authentication and Security" },
-          { title: "Database Integration" }
+          { id: "fs-3-1", title: "Node.js and Express Setup" },
+          { id: "fs-3-2", title: "RESTful API Design" },
+          { id: "fs-3-3", title: "Authentication and Security" },
+          { id: "fs-3-4", title: "Database Integration" }
         ]
       },
       {
         title: "Full-Stack Integration",
         lessons: [
-          { title: "Connecting Frontend to Backend" },
-          { title: "Deployment and Hosting" },
-          { title: "Testing and Debugging" },
-          { title: "Final Project" }
+          { id: "fs-4-1", title: "Connecting Frontend to Backend" },
+          { id: "fs-4-2", title: "Deployment and Hosting" },
+          { id: "fs-4-3", title: "Testing and Debugging" },
+          { id: "fs-4-4", title: "Final Project" }
         ]
       }
     ]
@@ -57,37 +57,37 @@ const samplePlans = {
       {
         title: "Python Programming",
         lessons: [
-          { title: "Python Syntax and Data Types" },
-          { title: "Control Flow and Functions" },
-          { title: "Object-Oriented Programming" },
-          { title: "File Handling and Modules" }
+          { id: "ds-1-1", title: "Python Syntax and Data Types" },
+          { id: "ds-1-2", title: "Control Flow and Functions" },
+          { id: "ds-1-3", title: "Object-Oriented Programming" },
+          { id: "ds-1-4", title: "File Handling and Modules" }
         ]
       },
       {
         title: "Data Analysis",
         lessons: [
-          { title: "NumPy for Numerical Computing" },
-          { title: "Pandas for Data Manipulation" },
-          { title: "Data Cleaning Techniques" },
-          { title: "Exploratory Data Analysis" }
+          { id: "ds-2-1", title: "NumPy for Numerical Computing" },
+          { id: "ds-2-2", title: "Pandas for Data Manipulation" },
+          { id: "ds-2-3", title: "Data Cleaning Techniques" },
+          { id: "ds-2-4", title: "Exploratory Data Analysis" }
         ]
       },
       {
         title: "Data Visualization",
         lessons: [
-          { title: "Matplotlib Basics" },
-          { title: "Seaborn for Statistical Plots" },
-          { title: "Interactive Visualizations" },
-          { title: "Dashboard Creation" }
+          { id: "ds-3-1", title: "Matplotlib Basics" },
+          { id: "ds-3-2", title: "Seaborn for Statistical Plots" },
+          { id: "ds-3-3", title: "Interactive Visualizations" },
+          { id: "ds-3-4", title: "Dashboard Creation" }
         ]
       },
       {
         title: "Machine Learning",
         lessons: [
-          { title: "ML Algorithms Overview" },
-          { title: "Supervised Learning" },
-          { title: "Unsupervised Learning" },
-          { title: "Model Evaluation and Deployment" }
+          { id: "ds-4-1", title: "ML Algorithms Overview" },
+          { id: "ds-4-2", title: "Supervised Learning" },
+          { id: "ds-4-3", title: "Unsupervised Learning" },
+          { id: "ds-4-4", title: "Model Evaluation and Deployment" }
         ]
       }
     ]
@@ -99,42 +99,64 @@ const samplePlans = {
       {
         title: "React Native Basics",
         lessons: [
-          { title: "Development Environment Setup" },
-          { title: "React Native Components" },
-          { title: "Styling and Flexbox" },
-          { title: "State and Props" }
+          { id: "mb-1-1", title: "Development Environment Setup" },
+          { id: "mb-1-2", title: "React Native Components" },
+          { id: "mb-1-3", title: "Styling and Flexbox" },
+          { id: "mb-1-4", title: "State and Props" }
         ]
       },
       {
         title: "Navigation and UX",
         lessons: [
-          { title: "Stack Navigation" },
-          { title: "Tab Navigation" },
-          { title: "Drawer Navigation" },
-          { title: "UI/UX Best Practices" }
+          { id: "mb-2-1", title: "Stack Navigation" },
+          { id: "mb-2-2", title: "Tab Navigation" },
+          { id: "mb-2-3", title: "Drawer Navigation" },
+          { id: "mb-2-4", title: "UI/UX Best Practices" }
         ]
       },
       {
         title: "Advanced Features",
         lessons: [
-          { title: "API Integration" },
-          { title: "Local Storage" },
-          { title: "Push Notifications" },
-          { title: "Camera and Media" }
+          { id: "mb-3-1", title: "API Integration" },
+          { id: "mb-3-2", title: "Local Storage" },
+          { id: "mb-3-3", title: "Push Notifications" },
+          { id: "mb-3-4", title: "Camera and Media" }
         ]
       },
       {
         title: "Deployment",
         lessons: [
-          { title: "App Store Guidelines" },
-          { title: "Building for iOS" },
-          { title: "Building for Android" },
-          { title: "App Distribution" }
+          { id: "mb-4-1", title: "App Store Guidelines" },
+          { id: "mb-4-2", title: "Building for iOS" },
+          { id: "mb-4-3", title: "Building for Android" },
+          { id: "mb-4-4", title: "App Distribution" }
         ]
       }
     ]
   }
 };
+
+// Lesson completion tracking functions
+function getCompletedLessons() {
+  const completed = localStorage.getItem('completedLessons');
+  return completed ? JSON.parse(completed) : {};
+}
+
+function saveCompletedLessons(completedLessons) {
+  localStorage.setItem('completedLessons', JSON.stringify(completedLessons));
+}
+
+function isLessonCompleted(lessonId) {
+  const completed = getCompletedLessons();
+  return completed[lessonId] === true;
+}
+
+function toggleLessonCompletion(lessonId) {
+  const completed = getCompletedLessons();
+  completed[lessonId] = !completed[lessonId];
+  saveCompletedLessons(completed);
+  return completed[lessonId];
+}
 
 function sendChatMessage() {
   console.log('Send Chat Message called');
@@ -369,7 +391,7 @@ window.renderExamplePathways = function() {
   if (!container) return;
   
   const pathwaysHtml = Object.entries(samplePlans).map(([key, plan]) => `
-    <div class="guest-plan-card" data-plan="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white;">
+    <div class="guest-plan-card" data-plan-key="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
       <div class="plan-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${plan.title}</h4>
         <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.phases.reduce((total, phase) => total + phase.lessons.length, 0)} lessons</span>
@@ -384,18 +406,16 @@ window.renderExamplePathways = function() {
           (allLessons.length > 3 ? `<span style="color: #999; font-size: 12px;">+${allLessons.length - 3} more lessons...</span>` : '');
         })()}
       </div>
-      <button class="guest-plan-btn" data-plan-key="${key}" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-        View Full Pathway
-      </button>
+      <div style="color: #999; font-size: 12px; text-align: right; margin-top: 8px;">Click to explore pathway →</div>
     </div>
   `).join('');
   
   container.innerHTML = pathwaysHtml;
   
-  // Add event listeners for "View Full Pathway" buttons
-  container.querySelectorAll('.guest-plan-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const planKey = e.target.getAttribute('data-plan-key');
+  // Add event listeners for pathway cards
+  container.querySelectorAll('.guest-plan-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      const planKey = e.currentTarget.getAttribute('data-plan-key');
       if (planKey) {
         showPathwayDetails(planKey);
       }
@@ -426,17 +446,20 @@ window.showPathwayDetails = function(planKey) {
               </div>
             </div>
             <div class="lessons-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
-              ${phase.lessons.map((lesson, lessonIndex) => `
+              ${phase.lessons.map((lesson, lessonIndex) => {
+                const isCompleted = isLessonCompleted(lesson.id);
+                return `
                 <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
-                  <div style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
-                    ${lessonIndex + 1}
+                  <div class="lesson-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
+                    ${isCompleted ? '✓' : lessonIndex + 1}
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #333; font-size: 14px;">${lesson.title}</div>
+                    <div class="lesson-title" style="font-weight: 500; color: #333; font-size: 14px; text-decoration: ${isCompleted ? 'line-through' : 'none'}; opacity: ${isCompleted ? '0.6' : '1'};">${lesson.title}</div>
                   </div>
                   <div style="color: #999; font-size: 12px; margin-left: 8px;">→</div>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           </div>
         `).join('')}
@@ -487,11 +510,27 @@ window.showPathwayDetails = function(planKey) {
       const phase = plan.phases[parseInt(phaseIndex)];
       const lesson = phase.lessons[parseInt(lessonIndex)];
       
-      // Generate lesson prompt using the constructPrompt function for consistency
-      const prompt = constructPrompt(plan, { title: lesson.title, timeline: '' });
+      // Set currentPlan for the selectLesson function
+      currentPlan = plan;
       
-      console.log('Generated lesson prompt:', prompt);
-      alert(`Lesson: ${lesson.title}\n\nGenerated prompt: ${prompt}`);
+      // Toggle lesson completion
+      const isCompleted = toggleLessonCompletion(lesson.id);
+      
+      // Update visual state
+      const lessonTitle = lessonItem.querySelector('.lesson-title');
+      const lessonBadge = lessonItem.querySelector('.lesson-badge');
+      
+      if (lessonTitle) {
+        lessonTitle.style.textDecoration = isCompleted ? 'line-through' : 'none';
+        lessonTitle.style.opacity = isCompleted ? '0.6' : '1';
+      }
+      
+      if (lessonBadge) {
+        lessonBadge.textContent = isCompleted ? '✓' : (parseInt(lessonIndex) + 1);
+      }
+      
+      // Use existing selectLesson function to inject prompt into ChatGPT
+      selectLesson({ title: lesson.title, timeline: '' });
     });
   }
 }
@@ -556,7 +595,9 @@ async function selectLesson(lesson) {
     
     // Check if we're on ChatGPT
     if (!tab?.url || (!tab.url.includes('chat.openai.com') && !tab.url.includes('chatgpt.com'))) {
-      alert('Please navigate to ChatGPT first to inject this lesson prompt!');
+      showNotification('Please open ChatGPT to inject this lesson prompt!');
+      // Optionally open ChatGPT in a new tab
+      chrome.tabs.create({ url: 'https://chat.openai.com' });
       return;
     }
     
