@@ -243,13 +243,23 @@ window.renderExamplePathways = function() {
         ).join('')}
         ${plan.tableOfContents.length > 3 ? '<span style="color: #999; font-size: 12px;">+' + (plan.tableOfContents.length - 3) + ' more...</span>' : ''}
       </div>
-      <button class="guest-plan-btn" onclick="showPathwayDetails('${key}')" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+      <button class="guest-plan-btn" data-plan-key="${key}" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
         View Full Pathway
       </button>
     </div>
   `).join('');
   
   container.innerHTML = pathwaysHtml;
+  
+  // Add event listeners for "View Full Pathway" buttons
+  container.querySelectorAll('.guest-plan-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const planKey = e.target.getAttribute('data-plan-key');
+      if (planKey) {
+        showPathwayDetails(planKey);
+      }
+    });
+  });
 }
 
 // Make function globally available for onclick handlers
@@ -274,7 +284,7 @@ window.showPathwayDetails = function(planKey) {
           </div>
         `).join('')}
       </div>
-      <button onclick="renderExamplePathways()" style="margin-top: 20px; background: transparent; color: hsl(142, 35%, 42%); border: 1px solid #ddd; padding: 8px 16px; border-radius: 16px; font-size: 13px; cursor: pointer;">
+      <button id="backToExamplesBtn" style="margin-top: 20px; background: transparent; color: hsl(142, 35%, 42%); border: 1px solid #ddd; padding: 8px 16px; border-radius: 16px; font-size: 13px; cursor: pointer;">
         ← Back to Examples
       </button>
     </div>
@@ -283,6 +293,14 @@ window.showPathwayDetails = function(planKey) {
   const container = document.getElementById('examplePathwaysContainer');
   if (container) {
     container.innerHTML = detailsHtml;
+    
+    // Add back button event listener
+    const backBtn = container.querySelector('#backToExamplesBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        renderExamplePathways();
+      });
+    }
   }
 }
 
