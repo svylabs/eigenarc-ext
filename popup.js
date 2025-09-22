@@ -17,6 +17,7 @@ let currentTab = 'currentPlan';
 // Chat and conversation state
 let currentConversationId = null;
 let generatedPlanId = null;
+let conversationHistory = {}; // Store conversation messages by conversationId
 
 // Sample learning plans data - using real course structure
 const samplePlans = {
@@ -368,6 +369,259 @@ function addMessageToChat(sender, message, containerId) {
   
   container.appendChild(messageDiv);
   container.scrollTop = container.scrollHeight;
+  
+  // Save message to conversation history
+  if (currentConversationId && sender !== 'system') {
+    saveMessageToHistory(sender, message);
+  }
+}
+
+// Save conversation messages to storage
+async function saveMessageToHistory(sender, message, messageType = 'text', data = null) {
+  if (!currentConversationId) return;
+  
+  try {
+    // Initialize conversation history if not exists
+    if (!conversationHistory[currentConversationId]) {
+      conversationHistory[currentConversationId] = [];
+    }
+    
+    // Add message with timestamp
+    conversationHistory[currentConversationId].push({
+      sender,
+      message,
+      messageType,
+      data,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Save to storage
+    await chrome.storage.local.set({ 
+      conversationHistory: conversationHistory,
+      lastConversationId: currentConversationId
+    });
+    
+    console.log('💾 Message saved to conversation history:', currentConversationId, messageType);
+  } catch (error) {
+    console.error('Error saving message to history:', error);
+  }
+}
+
+// Save generated plan to conversation history
+async function savePlanToHistory(plan, containerId) {
+  const message = '🎉 Generated Learning Plan';
+  await saveMessageToHistory('ai', message, 'generated_plan', { 
+    planId: plan.id,
+    planTitle: plan.title,
+    planDescription: plan.description,
+    containerId 
+  });
+  
+  // Also update conversation metadata
+  await saveConversationPlanState(plan.id);
+}
+
+// Save conversation plan state
+async function saveConversationPlanState(planId) {
+  if (!currentConversationId) return;
+  
+  try {
+    const conversationMeta = await chrome.storage.local.get('conversationMeta') || {};
+    if (!conversationMeta.conversationMeta) {
+      conversationMeta.conversationMeta = {};
+    }
+    
+    conversationMeta.conversationMeta[currentConversationId] = {
+      hasGeneratedPlan: true,
+      planId: planId,
+      generatedAt: new Date().toISOString()
+    };
+    
+    await chrome.storage.local.set(conversationMeta);
+    console.log('💾 Saved plan state for conversation:', currentConversationId, 'Plan ID:', planId);
+  } catch (error) {
+    console.error('Error saving conversation plan state:', error);
+  }
+}
+
+// Load conversation history from storage
+async function loadConversationHistory() {
+  try {
+    const result = await chrome.storage.local.get(['conversationHistory', 'lastConversationId']);
+    
+    if (result.conversationHistory) {
+      conversationHistory = result.conversationHistory;
+      console.log('📜 Loaded conversation history:', Object.keys(conversationHistory).length, 'conversations');
+    }
+    
+    // Restore last conversation if no current conversation
+    if (!currentConversationId && result.lastConversationId) {
+      currentConversationId = result.lastConversationId;
+      console.log('🔄 Restored last conversation ID:', currentConversationId);
+    }
+    
+    return conversationHistory;
+  } catch (error) {
+    console.error('Error loading conversation history:', error);
+    return {};
+  }
+}
+
+// Display conversation messages in chat container
+async function displayConversationHistory(containerId) {
+  if (!currentConversationId || !conversationHistory[currentConversationId]) {
+    console.log('📭 No conversation history to display for:', currentConversationId);
+    return;
+  }
+  
+  const container = document.getElementById(containerId);
+  const messages = conversationHistory[currentConversationId];
+  
+  console.log('📖 Displaying', messages.length, 'messages for conversation:', currentConversationId);
+  
+  // Clear existing messages except welcome message
+  const welcomeMessage = container.querySelector('.message.ai');
+  const welcomeMessageHtml = welcomeMessage?.outerHTML;
+  container.innerHTML = '';
+  
+  // Restore welcome message if it existed
+  if (welcomeMessageHtml) {
+    container.innerHTML = welcomeMessageHtml;
+  }
+  
+  // Add conversation history
+  for (const msg of messages) {
+    if (msg.messageType === 'generated_plan' && msg.data) {
+      // Display generated plan UI
+      await displayGeneratedPlanFromHistory(msg.data, container);
+    } else {
+      // Display regular message
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${msg.sender}`;
+      messageDiv.textContent = msg.message;
+      container.appendChild(messageDiv);
+    }
+  }
+  
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+// Display generated plan from history
+async function displayGeneratedPlanFromHistory(planData, container) {
+  try {
+    // Fetch the full plan details using the planId
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch(`${API_BASE_URL}/api/plans/${planData.planId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const plan = await response.json();
+      
+      // Display the plan using the appropriate display function
+      if (planData.containerId === 'chatMessages') {
+        // Create the plan preview element and append to container
+        addMessageToChat('ai', '🎉 Perfect! I\'ve created your personalized learning plan based on our conversation:', planData.containerId);
+        const planPreview = createPlanPreviewElement(plan, true);
+        container.appendChild(planPreview);
+      } else {
+        // For createPlanMessages
+        addMessageToChat('ai', '🎉 Great! I\'ve created your personalized learning plan. Here\'s what I\'ve prepared for you:', planData.containerId);
+        const planPreview = createPlanPreviewElement(plan, false);
+        container.appendChild(planPreview);
+      }
+    } else {
+      // Plan no longer exists, show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'message ai';
+      errorDiv.textContent = '⚠️ Previously generated plan is no longer available.';
+      container.appendChild(errorDiv);
+    }
+  } catch (error) {
+    console.error('Error loading plan from history:', error);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'message ai';
+    errorDiv.textContent = '⚠️ Error loading previously generated plan.';
+    container.appendChild(errorDiv);
+  }
+}
+
+// Create plan preview element (extracted from existing functions)
+function createPlanPreviewElement(plan, isMainChat = false) {
+  const planPreview = document.createElement('div');
+  const className = isMainChat ? 'generated-plan-preview-main' : 'generated-plan-preview';
+  const enrollBtnId = isMainChat ? 'mainEnrollInPlanBtn' : 'enrollInPlanBtn';
+  const detailsBtnId = isMainChat ? 'mainViewPlanDetailsBtn' : 'viewPlanDetailsBtn';
+  
+  planPreview.className = className;
+  planPreview.style.cssText = `
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+  `;
+  
+  planPreview.innerHTML = `
+    <h4 style="margin: 0 0 12px 0; color: hsl(142, 35%, 42%);">${plan.title}</h4>
+    <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.5;">${plan.description}</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Duration</div>
+        <div style="font-weight: 600; color: #333;">${plan.duration || plan.timeline || 'Not specified'}</div>
+      </div>
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Level</div>
+        <div style="font-weight: 600; color: #333;">${plan.skillLevel}</div>
+      </div>
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Phases</div>
+        <div style="font-weight: 600; color: #333;">${plan.phases.length}</div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 12px;">
+      <button id="${enrollBtnId}" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
+        🚀 Start Learning with this Plan
+      </button>
+      <button id="${detailsBtnId}" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+        View Details
+      </button>
+    </div>
+  `;
+  
+  // Add event listeners with unique IDs
+  setTimeout(() => {
+    const enrollBtn = document.getElementById(enrollBtnId);
+    const detailsBtn = document.getElementById(detailsBtnId);
+    
+    if (enrollBtn) {
+      enrollBtn.addEventListener('click', () => {
+        if (isMainChat) {
+          handleMainChatPlanEnrollment(plan.id);
+        } else {
+          handlePlanEnrollment(plan.id);
+        }
+      });
+    }
+    
+    if (detailsBtn) {
+      detailsBtn.addEventListener('click', () => {
+        if (isMainChat) {
+          showMainChatPlanDetails(plan);
+        } else {
+          showPlanDetails(plan);
+        }
+      });
+    }
+  }, 100);
+  
+  return planPreview;
 }
 
 // Automatic Plan Generation Handler
@@ -401,6 +655,9 @@ async function handleAutomaticPlanGeneration(planParameters, containerId) {
     } else {
       showGeneratedPlan(plan);
     }
+    
+    // Save plan to conversation history
+    await savePlanToHistory(plan, containerId);
     
   } catch (error) {
     console.error('❌ Error in automatic plan generation:', error);
@@ -518,6 +775,9 @@ async function handlePlanGeneration() {
     // Show the generated plan
     showGeneratedPlan(plan);
     
+    // Save plan to conversation history
+    await savePlanToHistory(plan, 'createPlanMessages');
+    
   } catch (error) {
     console.error('Error generating plan:', error);
     addMessageToChat('ai', 'Sorry, I encountered an error while generating your plan. Please try again.', 'createPlanMessages');
@@ -550,7 +810,7 @@ function showGeneratedPlan(plan) {
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
       <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Duration</div>
-        <div style="font-weight: 600; color: #333;">${plan.duration}</div>
+        <div style="font-weight: 600; color: #333;">${plan.duration || plan.timeline || 'Not specified'}</div>
       </div>
       <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Level</div>
@@ -749,6 +1009,9 @@ async function handleMainChatPlanGeneration() {
     // Show the generated plan in main chat
     showGeneratedPlanInMainChat(plan);
     
+    // Save plan to conversation history
+    await savePlanToHistory(plan, 'chatMessages');
+    
   } catch (error) {
     console.error('Error generating plan:', error);
     addMessageToChat('ai', 'Sorry, I encountered an error while generating your plan. Please try again.', 'chatMessages');
@@ -781,7 +1044,7 @@ function showGeneratedPlanInMainChat(plan) {
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
       <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Duration</div>
-        <div style="font-weight: 600; color: #333;">${plan.duration}</div>
+        <div style="font-weight: 600; color: #333;">${plan.duration || plan.timeline || 'Not specified'}</div>
       </div>
       <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Level</div>
@@ -1086,6 +1349,8 @@ function switchTab(tabName, element) {
   } else if (tabName === 'createPlan') {
     document.getElementById('createPlanTab').classList.remove('hidden');
     updateCreatePlanView();
+    // Display conversation history for Create Plan tab
+    setTimeout(() => displayConversationHistory('createPlanMessages'), 100);
   } else if (tabName === 'examples') {
     console.log('Switching to examples tab...');
     document.getElementById('examplesTab').classList.remove('hidden');
@@ -2439,13 +2704,16 @@ function showNotification(message) {
 }
 
 // Initialize extension
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 === POPUP OPENED ===');
   console.log('📊 Current view state at startup:', currentViewState);
   console.log('📍 Scroll positions at startup:', currentViewState.scrollPositions);
   console.log('🎯 Current view:', currentViewState.view);
   console.log('📚 Current course ID:', currentViewState.courseId);
   console.log('========================');
+  
+  // Load conversation history on startup
+  await loadConversationHistory();
   
   // Attach event listeners
   document.getElementById('beginLearningBtn').addEventListener('click', () => {
@@ -2805,5 +3073,8 @@ function showScreen(screenId) {
     updateTabVisibility();
     // Restore saved tab if available
     restoreSavedTab();
+  } else if (screenId === 'chatScreen') {
+    // Display conversation history when entering chat screen
+    setTimeout(() => displayConversationHistory('chatMessages'), 100);
   }
 }
