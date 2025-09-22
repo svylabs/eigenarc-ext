@@ -304,7 +304,13 @@ window.firebaseAuth = {
     }
   },
   
-  getCurrentUser: () => currentUser
+  getCurrentUser: () => currentUser,
+  
+  // Helper method to set current user (used when restoring from storage)
+  setCurrentUser: (user) => {
+    currentUser = user;
+    console.log('Firebase currentUser updated:', user ? (user.email || user.displayName) : 'null');
+  }
 };
 
 // Notify popup.js that Firebase is ready

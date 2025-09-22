@@ -347,12 +347,24 @@ async function updateMyPathwaysView() {
   const pathwaysView = document.getElementById('pathwaysList');
   const emptyView = document.getElementById('pathwaysEmpty');
   
+  console.log('updateMyPathwaysView called, currentUser:', currentUser ? 'signed in' : 'not signed in');
+  
   // Hide all views initially
   [signinView, loadingView, pathwaysView, emptyView].forEach(view => {
     if (view) view.style.display = 'none';
   });
   
-  if (currentUser) {
+  // Check if user is actually signed in
+  if (!currentUser || !currentUser.uid) {
+    console.log('No user signed in, showing signin view');
+    if (signinView) signinView.style.display = 'block';
+    return;
+  }
+  
+  console.log('User signed in, loading courses...');
+  
+  // User is signed in, proceed with course loading
+  try {
     // Check if we have cached courses to show immediately
     const cachedCourses = loadCoursesFromCache();
     const cacheAge = getCacheAge();
@@ -398,8 +410,9 @@ async function updateMyPathwaysView() {
         }
       }
     }
-  } else {
-    // User not signed in - show signin prompt
+  } catch (error) {
+    console.error('Error in updateMyPathwaysView:', error);
+    // Fallback to signin view if something goes wrong
     if (signinView) signinView.style.display = 'block';
   }
 }
@@ -1136,6 +1149,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.currentUser) {
       currentUser = result.currentUser;
       
+      // Also update the currentUser in firebase.js
+      if (window.firebaseAuth && window.firebaseAuth.setCurrentUser) {
+        window.firebaseAuth.setCurrentUser(currentUser);
+      }
+      
+      console.log('Restored user state:', currentUser.email || currentUser.displayName);
+      
       // Check if token needs refresh on startup
       if (result.firebaseAuth && result.firebaseAuth.tokenExpiry) {
         const now = Date.now();
@@ -1148,10 +1168,16 @@ document.addEventListener('DOMContentLoaded', () => {
             await window.firebaseAuth.getValidToken();
           } catch (error) {
             console.error('Startup token refresh failed:', error);
-            // If refresh fails, user will be signed out when they try to use the app
+            // If refresh fails, clear the user state
+            currentUser = null;
+            if (window.firebaseAuth && window.firebaseAuth.setCurrentUser) {
+              window.firebaseAuth.setCurrentUser(null);
+            }
           }
         }
       }
+    } else {
+      console.log('No saved user state found');
     }
     
     // Set default tab based on authentication status
