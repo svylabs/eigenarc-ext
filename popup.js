@@ -1148,18 +1148,25 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Restore saved state (screen, tab, user)
   chrome.storage.local.get(['currentUser', 'currentScreen', 'currentTab', 'firebaseAuth'], async (result) => {
-    if (result.currentUser) {
-      currentUser = result.currentUser;
+    if (result.currentUser && result.firebaseAuth) {
+      // Reconstruct the complete user object with Firebase token info
+      currentUser = {
+        ...result.currentUser,
+        firebaseToken: result.firebaseAuth.idToken,
+        refreshToken: result.firebaseAuth.refreshToken,
+        tokenExpiry: result.firebaseAuth.tokenExpiry
+      };
       
-      // Also update the currentUser in firebase.js
+      // Also update the currentUser in firebase.js with complete object
       if (window.firebaseAuth && window.firebaseAuth.setCurrentUser) {
         window.firebaseAuth.setCurrentUser(currentUser);
       }
       
-      console.log('Restored user state:', currentUser.email || currentUser.displayName);
+      console.log('Restored user state with token:', currentUser.email || currentUser.displayName);
+      console.log('Token expiry:', new Date(currentUser.tokenExpiry));
       
       // Check if token needs refresh on startup
-      if (result.firebaseAuth && result.firebaseAuth.tokenExpiry) {
+      if (result.firebaseAuth.tokenExpiry) {
         const now = Date.now();
         const tokenExpiry = result.firebaseAuth.tokenExpiry;
         
@@ -1178,6 +1185,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       }
+    } else if (result.currentUser && !result.firebaseAuth) {
+      console.log('User found but no Firebase auth data - user needs to sign in again');
+      // Clear incomplete user state
+      await chrome.storage.local.remove(['currentUser']);
     } else {
       console.log('No saved user state found');
     }

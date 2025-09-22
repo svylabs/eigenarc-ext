@@ -276,8 +276,13 @@ window.firebaseAuth = {
   
   getValidToken: async () => {
     try {
-      if (!currentUser || !currentUser.firebaseToken) {
+      if (!currentUser) {
         throw new Error('No user signed in');
+      }
+      
+      if (!currentUser.firebaseToken) {
+        console.log('Current user object:', currentUser);
+        throw new Error('No Firebase token found for user');
       }
       
       // Check if token is expired or will expire in next 5 minutes
