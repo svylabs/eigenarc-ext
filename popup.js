@@ -661,11 +661,21 @@ function showCourseDetail(course) {
   if (pathwaysList) pathwaysList.style.display = 'none';
   courseDetailView.style.display = 'block';
   
+  // Check if this is a different course before updating state
+  const previousCourseId = currentViewState.courseId;
+  const isDifferentCourse = previousCourseId !== course.id;
+  
   // Update view state
   currentViewState.view = 'courseDetail';
   currentViewState.courseId = course.id;
-  // Reset scroll position for course detail view
-  currentViewState.scrollPositions.courseDetail = 0;
+  
+  // Only reset scroll position if this is a different course
+  if (isDifferentCourse || !previousCourseId) {
+    console.log('Opening different course, resetting scroll position. Previous:', previousCourseId, 'New:', course.id);
+    currentViewState.scrollPositions.courseDetail = 0;
+  } else {
+    console.log('Same course, keeping existing scroll position:', currentViewState.scrollPositions.courseDetail);
+  }
   
   // Save state to storage
   saveViewState();
@@ -818,22 +828,33 @@ function showCourseDetail(course) {
   
   // Restore scroll position after content is loaded and add scroll tracking
   setTimeout(() => {
-    // Add scroll tracking to the course detail view
     const courseDetailView = document.getElementById('courseDetailView');
     if (courseDetailView) {
+      console.log('Course detail view found:', courseDetailView);
+      console.log('Scroll height:', courseDetailView.scrollHeight, 'Client height:', courseDetailView.clientHeight);
+      console.log('Current styles:', window.getComputedStyle(courseDetailView).overflow, window.getComputedStyle(courseDetailView).height);
+      
+      // Test scroll functionality
       console.log('Adding scroll listener to courseDetailView');
       courseDetailView.addEventListener('scroll', (e) => {
+        console.log('SCROLL EVENT DETECTED! Position:', e.target.scrollTop);
         clearTimeout(window.globalScrollTimeout);
         window.globalScrollTimeout = setTimeout(() => {
           console.log('Course detail scroll detected at position:', e.target.scrollTop);
           saveScrollPosition();
         }, 250);
       });
+      
+      // Only restore scroll position if we have a saved position and it's the same course
+      const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
+      console.log('Restoring course detail scroll position:', savedPosition);
+      if (savedPosition > 0) {
+        courseDetailView.scrollTop = savedPosition;
+      }
+    } else {
+      console.error('courseDetailView element not found!');
     }
-    
-    // Restore the scroll position for this view
-    restoreScrollPosition();
-  }, 500);
+  }, 600);
 }
 
 // Function to go back to pathways list
@@ -942,7 +963,8 @@ function saveScrollPosition() {
   
   // Save scroll position for the current view
   currentViewState.scrollPositions[currentView] = scrollPosition;
-  console.log(`Saved scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
+  console.log(`*** SAVING scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
+  console.log('Updated scroll positions:', currentViewState.scrollPositions);
   saveViewState();
 }
 
