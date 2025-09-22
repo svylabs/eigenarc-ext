@@ -816,10 +816,24 @@ function showCourseDetail(course) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position after content is loaded
+  // Restore scroll position after content is loaded and add scroll tracking
   setTimeout(() => {
+    // Add scroll tracking to the course detail view
+    const courseDetailView = document.getElementById('courseDetailView');
+    if (courseDetailView) {
+      console.log('Adding scroll listener to courseDetailView');
+      courseDetailView.addEventListener('scroll', (e) => {
+        clearTimeout(window.globalScrollTimeout);
+        window.globalScrollTimeout = setTimeout(() => {
+          console.log('Course detail scroll detected at position:', e.target.scrollTop);
+          saveScrollPosition();
+        }, 250);
+      });
+    }
+    
+    // Restore the scroll position for this view
     restoreScrollPosition();
-  }, 400);
+  }, 500);
 }
 
 // Function to go back to pathways list
@@ -894,7 +908,18 @@ function saveViewState() {
 }
 
 function getScrollableElement() {
-  // The main scrollable container in the popup is .tab-content
+  const currentView = currentViewState.view;
+  
+  if (currentView === 'courseDetail') {
+    // Course detail view has its own scrollable container
+    const courseDetailView = document.getElementById('courseDetailView');
+    if (courseDetailView && courseDetailView.style.display !== 'none') {
+      console.log('Using courseDetailView as scrollable element, scrollHeight:', courseDetailView.scrollHeight, 'clientHeight:', courseDetailView.clientHeight);
+      return courseDetailView;
+    }
+  }
+  
+  // For pathways list and other views, use .tab-content
   const tabContent = document.querySelector('.tab-content');
   if (tabContent) {
     console.log('Using tab-content as scrollable element, scrollHeight:', tabContent.scrollHeight, 'clientHeight:', tabContent.clientHeight);
@@ -1562,11 +1587,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Track scroll position on multiple potential scroll containers
     let scrollTimeout;
+    window.globalScrollTimeout = scrollTimeout; // Make globally accessible
     const addScrollTracking = (element) => {
       if (element) {
+        console.log('Adding scroll tracking to:', element.tagName, element.id || element.className);
         element.addEventListener('scroll', () => {
-          clearTimeout(scrollTimeout);
-          scrollTimeout = setTimeout(trackScrollPosition, 250);
+          clearTimeout(window.globalScrollTimeout);
+          window.globalScrollTimeout = setTimeout(trackScrollPosition, 250);
         });
       }
     };
@@ -1585,8 +1612,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Also add a universal scroll listener
     document.addEventListener('scroll', (e) => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(trackScrollPosition, 250);
+      clearTimeout(window.globalScrollTimeout);
+      window.globalScrollTimeout = setTimeout(trackScrollPosition, 250);
     }, true); // Use capture to catch all scroll events
     
     // Save position when popup is about to close
