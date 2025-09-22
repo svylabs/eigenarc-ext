@@ -102,8 +102,9 @@ window.firebaseAuth = {
         await chrome.identity.removeCachedAuthToken({ token });
       }
       
-      // Clear stored user data
+      // Clear stored user data and reset to examples tab
       await chrome.storage.local.remove(['currentUser']);
+      await chrome.storage.local.set({ currentTab: 'examples' });
       
       return true;
     } catch (error) {

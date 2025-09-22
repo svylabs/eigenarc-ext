@@ -3,6 +3,8 @@
 let currentUser = null;
 let currentPlan = null;
 let chatHistory = [];
+let currentScreen = 'welcomeScreen';
+let currentTab = 'currentPlan';
 
 // Sample learning plans data
 const samplePlans = {
@@ -140,6 +142,10 @@ async function signInWithFirebase() {
       // Save user to storage for persistence
       chrome.storage.local.set({ currentUser });
       
+      // Update current tab for signed-in user (remove examples)
+      currentTab = 'currentPlan';
+      chrome.storage.local.set({ currentTab });
+      
       // Navigate to home screen
       showScreen('homeScreen');
     } else {
@@ -157,6 +163,10 @@ async function signInWithFirebase() {
 
 function switchTab(tabName, element) {
   console.log('Switching to tab:', tabName);
+  
+  // Save current tab state
+  currentTab = tabName;
+  chrome.storage.local.set({ currentTab: tabName });
   
   // Update tab buttons
   document.querySelectorAll('.tab').forEach(tab => {
@@ -223,6 +233,46 @@ function updateMyPathwaysView() {
     if (signinView) signinView.style.display = 'block';
     if (emptyView) emptyView.style.display = 'none';
   }
+}
+
+function updateTabVisibility() {
+  const examplesTabBtn = document.getElementById('examplesTabBtn');
+  
+  if (currentUser) {
+    // Signed in: hide Examples tab
+    if (examplesTabBtn) {
+      examplesTabBtn.style.display = 'none';
+    }
+    // If current tab is examples, switch to My Pathways
+    if (currentTab === 'examples') {
+      currentTab = 'currentPlan';
+    }
+  } else {
+    // Not signed in: show Examples tab
+    if (examplesTabBtn) {
+      examplesTabBtn.style.display = 'block';
+    }
+    // Default to examples tab for non-signed in users
+    if (currentTab !== 'examples') {
+      currentTab = 'examples';
+    }
+  }
+}
+
+function restoreSavedTab() {
+  // Restore the saved tab when homeScreen loads
+  setTimeout(() => {
+    const tabButtons = {
+      'currentPlan': document.getElementById('currentPlanTabBtn'),
+      'createPlan': document.getElementById('createPlanTabBtn'),
+      'examples': document.getElementById('examplesTabBtn')
+    };
+    
+    const targetButton = tabButtons[currentTab];
+    if (targetButton && targetButton.style.display !== 'none') {
+      switchTab(currentTab, targetButton);
+    }
+  }, 100);
 }
 
 // Make function globally available
@@ -426,6 +476,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach event listeners
   document.getElementById('beginLearningBtn').addEventListener('click', () => {
     console.log('Begin Learning clicked');
+    if (!currentUser) {
+      // Not signed in: set tab to examples before showing home screen
+      currentTab = 'examples';
+    }
     showScreen('homeScreen');
   });
   
@@ -525,11 +579,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 100);
   
-  // Check if user is already logged in (from storage)
-  chrome.storage.local.get(['currentUser'], (result) => {
+  // Restore saved state (screen, tab, user)
+  chrome.storage.local.get(['currentUser', 'currentScreen', 'currentTab'], (result) => {
     if (result.currentUser) {
       currentUser = result.currentUser;
+    }
+    
+    // Set default tab based on authentication status
+    if (currentUser) {
+      // Signed in: default to My Pathways, no Examples tab
+      currentTab = result.currentTab && result.currentTab !== 'examples' ? result.currentTab : 'currentPlan';
+    } else {
+      // Not signed in: default to Examples tab
+      currentTab = result.currentTab || 'examples';
+    }
+    
+    // Restore screen - default to homeScreen if user is logged in, otherwise welcomeScreen
+    const savedScreen = result.currentScreen;
+    if (savedScreen && (savedScreen !== 'welcomeScreen' || currentUser)) {
+      currentScreen = savedScreen;
+      showScreen(savedScreen);
+    } else if (currentUser) {
       showScreen('homeScreen');
+    } else {
+      showScreen('welcomeScreen');
     }
   });
 });
@@ -537,6 +610,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Define functions normally (not on window object)
 function showScreen(screenId) {
   console.log('Showing screen:', screenId);
+  
+  // Save current screen state
+  currentScreen = screenId;
+  chrome.storage.local.set({ currentScreen: screenId });
+  
   // Hide all screens
   document.querySelectorAll('.screen').forEach(screen => {
     screen.classList.remove('active');
@@ -554,5 +632,9 @@ function showScreen(screenId) {
   // Special handling for different screens
   if (screenId === 'homeScreen') {
     loadCurrentPlan();
+    // Update tab visibility based on authentication
+    updateTabVisibility();
+    // Restore saved tab if available
+    restoreSavedTab();
   }
 }
