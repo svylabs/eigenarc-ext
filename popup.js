@@ -1338,6 +1338,10 @@ window.signOutUser = async function() {
         scrollPosition: 0
       };
       
+      // Force tab to examples for guest experience
+      currentTab = 'examples';
+      chrome.storage.local.set({ currentTab: 'examples' });
+      
       // Refresh the UI to show signed out state
       showScreen('homeScreen');
       
