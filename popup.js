@@ -549,6 +549,8 @@ async function fetchUserCourses(testToken = null) {
   }
 }
 
+let isRefreshing = false;
+
 function renderUserCourses(courses, isStale = false) {
   const container = document.getElementById('coursesContainer');
   const countEl = document.getElementById('pathwaysCount');
@@ -557,15 +559,14 @@ function renderUserCourses(courses, isStale = false) {
   
   // Update header with course count
   if (countEl) {
-    const countText = isStale ? 
-      `Showing ${courses.length} pathways (offline mode)` : 
+    const countText = isRefreshing ? 
+      `Refreshing pathways...` : 
       `Showing ${courses.length} pathways`;
     countEl.textContent = countText;
   }
   
-  // Add offline/stale data indicator (smaller version)
-  const statusIndicator = isStale ? 
-    '<div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 8px; margin-bottom: 12px; font-size: 12px; color: #856404; text-align: center;">📱 Offline Mode</div>' : '';
+  // No status indicator for stale data - just show refresh button
+  const statusIndicator = '';
   
   const coursesHtml = courses.map(course => {
     const completionStatus = course.isCompleted ? 
@@ -620,8 +621,7 @@ function renderUserCourses(courses, isStale = false) {
       const courseId = card.dataset.courseId;
       const course = courses.find(c => c.id === courseId);
       if (course) {
-        // TODO: Navigate to course detail view or start learning
-        console.log('Course clicked:', course);
+        showCourseDetail(course);
       }
     });
     
@@ -636,6 +636,215 @@ function renderUserCourses(courses, isStale = false) {
       card.style.boxShadow = '0 1px 2px rgba(0,0,0,0.08)';
     });
   });
+}
+
+// Function to show course detail view
+function showCourseDetail(course) {
+  const pathwaysList = document.getElementById('pathwaysList');
+  const courseDetailView = document.getElementById('courseDetailView');
+  const courseDetailContent = document.getElementById('courseDetailContent');
+  
+  if (!courseDetailView || !courseDetailContent) return;
+  
+  // Hide pathways list and show detail view
+  if (pathwaysList) pathwaysList.style.display = 'none';
+  courseDetailView.style.display = 'block';
+  
+  // Parse phases from JSON string if needed
+  let phases = [];
+  try {
+    if (typeof course.phases === 'string') {
+      phases = JSON.parse(course.phases);
+    } else if (Array.isArray(course.phases)) {
+      phases = course.phases;
+    }
+  } catch (error) {
+    console.error('Error parsing phases:', error);
+    phases = [];
+  }
+  
+  // Build progress map for easy lookup
+  const progressMap = {};
+  if (course.progress && Array.isArray(course.progress)) {
+    course.progress.forEach(p => {
+      const key = `${p.phaseIndex}-${p.taskIndex}`;
+      progressMap[key] = p;
+    });
+  }
+  
+  // Generate course detail HTML
+  const completionStatus = course.isCompleted ? 
+    '<span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 14px; font-size: 13px; font-weight: 500;">✓ Completed</span>' :
+    '<span style="background: #007bff; color: white; padding: 4px 12px; border-radius: 14px; font-size: 13px; font-weight: 500;">In Progress</span>';
+    
+  const enrolledDate = new Date(course.enrolledAt).toLocaleDateString();
+  const completedDate = course.completedAt ? new Date(course.completedAt).toLocaleDateString() : null;
+  
+  const phasesCount = phases.length;
+  
+  let phasesHtml = '';
+  if (phases.length > 0) {
+    phasesHtml = `
+      <div style="margin-top: 24px;">
+        <h4 style="color: hsl(142, 35%, 42%); margin: 0 0 16px 0; font-size: 16px;">Learning Phases (${phasesCount})</h4>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          ${phases.map((phase, phaseIndex) => {
+            // Calculate phase completion
+            const phaseTasks = phase.tasks || [];
+            const completedTasks = phaseTasks.filter((_, taskIndex) => {
+              const key = `${phaseIndex}-${taskIndex}`;
+              return progressMap[key] && progressMap[key].isCompleted;
+            }).length;
+            const phaseProgress = phaseTasks.length > 0 ? Math.round((completedTasks / phaseTasks.length) * 100) : 0;
+            const phaseCompleted = phaseProgress === 100;
+            
+            return `
+            <div style="
+              border: 1px solid #e1e5e9;
+              border-radius: 8px;
+              padding: 16px;
+              background: white;
+            ">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div style="flex: 1;">
+                  <h5 style="margin: 0 0 4px 0; color: #333; font-size: 15px; font-weight: 600;">${phase.title || `Phase ${phaseIndex + 1}`}</h5>
+                  <div style="font-size: 12px; color: #888; margin-bottom: 8px;">${phase.duration || ''}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; color: #666;">${completedTasks}/${phaseTasks.length} tasks</span>
+                  ${phaseCompleted ? 
+                    '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">✓ Completed</span>' : 
+                    '<span style="background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">In Progress</span>'
+                  }
+                </div>
+              </div>
+              
+              ${phase.description ? `<p style="margin: 0 0 16px 0; color: #666; font-size: 13px; line-height: 1.4;">${phase.description}</p>` : ''}
+              
+              ${phaseTasks.length > 0 ? `
+                <div style="margin-top: 12px;">
+                  <div style="font-size: 13px; font-weight: 500; color: #333; margin-bottom: 8px;">Tasks:</div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    ${phaseTasks.map((task, taskIndex) => {
+                      const key = `${phaseIndex}-${taskIndex}`;
+                      const taskProgress = progressMap[key];
+                      const isCompleted = taskProgress && taskProgress.isCompleted;
+                      const completedAt = taskProgress && taskProgress.completedAt ? new Date(taskProgress.completedAt).toLocaleDateString() : null;
+                      
+                      return `
+                        <div style="
+                          display: flex; 
+                          align-items: flex-start; 
+                          gap: 8px; 
+                          padding: 8px 12px; 
+                          background: ${isCompleted ? '#f8f9fa' : '#fff'}; 
+                          border: 1px solid ${isCompleted ? '#28a745' : '#e9ecef'}; 
+                          border-radius: 6px;
+                          font-size: 12px;
+                        ">
+                          <span style="
+                            width: 16px; 
+                            height: 16px; 
+                            border-radius: 50%; 
+                            background: ${isCompleted ? '#28a745' : '#dee2e6'}; 
+                            color: white; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            font-size: 10px;
+                            flex-shrink: 0;
+                            margin-top: 2px;
+                          ">${isCompleted ? '✓' : taskIndex + 1}</span>
+                          <div style="flex: 1; line-height: 1.4;">
+                            <div style="color: ${isCompleted ? '#28a745' : '#333'};">${task}</div>
+                            ${completedAt ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">Completed: ${completedAt}</div>` : ''}
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  courseDetailContent.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <h2 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 20px; font-weight: 600; line-height: 1.3;">${course.title}</h2>
+        ${completionStatus}
+      </div>
+      
+      <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.5;">${course.description || 'No description available'}</p>
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+        ${course.duration ? `<span style="background: #f8f9fa; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">Duration: ${course.duration}</span>` : ''}
+        ${course.skillLevel ? `<span style="background: #f8f9fa; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">Level: ${course.skillLevel}</span>` : ''}
+        ${phasesCount > 0 ? `<span style="background: #f8f9fa; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">${phasesCount} phases</span>` : ''}
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid #f0f0f0; font-size: 13px; color: #888;">
+        <span>Enrolled: ${enrolledDate}</span>
+        ${completedDate ? `<span>Completed: ${completedDate}</span>` : '<span>Continue learning →</span>'}
+      </div>
+    </div>
+    ${phasesHtml}
+  `;
+}
+
+// Function to go back to pathways list
+function backToPathways() {
+  const pathwaysList = document.getElementById('pathwaysList');
+  const courseDetailView = document.getElementById('courseDetailView');
+  
+  if (courseDetailView) courseDetailView.style.display = 'none';
+  if (pathwaysList) pathwaysList.style.display = 'block';
+}
+
+// Function to refresh pathways
+async function refreshPathways() {
+  if (isRefreshing) return;
+  
+  const refreshBtn = document.getElementById('refreshPathwaysBtn');
+  const countEl = document.getElementById('pathwaysCount');
+  
+  try {
+    isRefreshing = true;
+    
+    // Update UI to show refreshing state
+    if (refreshBtn) {
+      refreshBtn.style.opacity = '0.5';
+      refreshBtn.style.cursor = 'not-allowed';
+    }
+    if (countEl) {
+      countEl.textContent = 'Refreshing pathways...';
+    }
+    
+    // Force refresh by clearing cache and fetching fresh data
+    const user = await getCurrentUser();
+    if (user && user.idToken) {
+      clearUserCoursesCache(user.uid);
+      await loadUserCourses(user);
+    }
+  } catch (error) {
+    console.error('Error refreshing pathways:', error);
+    if (countEl) {
+      countEl.textContent = 'Error refreshing pathways';
+    }
+  } finally {
+    isRefreshing = false;
+    
+    // Reset button state
+    if (refreshBtn) {
+      refreshBtn.style.opacity = '1';
+      refreshBtn.style.cursor = 'pointer';
+    }
+  }
 }
 
 // Cache management functions
@@ -1178,6 +1387,40 @@ document.addEventListener('DOMContentLoaded', () => {
       createPlanSigninBtn.addEventListener('click', signInWithFirebase);
     }
     
+    // Refresh pathways button listener
+    const refreshPathwaysBtn = document.getElementById('refreshPathwaysBtn');
+    if (refreshPathwaysBtn) {
+      refreshPathwaysBtn.addEventListener('click', refreshPathways);
+      
+      // Add hover effects
+      refreshPathwaysBtn.addEventListener('mouseenter', () => {
+        refreshPathwaysBtn.style.background = '#f8f9fa';
+        refreshPathwaysBtn.style.borderColor = '#d0d7de';
+      });
+      
+      refreshPathwaysBtn.addEventListener('mouseleave', () => {
+        if (!isRefreshing) {
+          refreshPathwaysBtn.style.background = 'none';
+          refreshPathwaysBtn.style.borderColor = '#e1e5e9';
+        }
+      });
+    }
+
+    // Back to pathways button listener
+    const backToPathwaysBtn = document.getElementById('backToPathwaysBtn');
+    if (backToPathwaysBtn) {
+      backToPathwaysBtn.addEventListener('click', backToPathways);
+      
+      // Add hover effects
+      backToPathwaysBtn.addEventListener('mouseenter', () => {
+        backToPathwaysBtn.style.background = '#f8f9fa';
+      });
+      
+      backToPathwaysBtn.addEventListener('mouseleave', () => {
+        backToPathwaysBtn.style.background = 'none';
+      });
+    }
+
     // Settings dropdown event listeners
     const settingsBtn = document.getElementById('settingsBtn');
     const dropdownMenu = document.getElementById('dropdownMenu');
