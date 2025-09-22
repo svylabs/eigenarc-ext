@@ -987,20 +987,44 @@ async function restoreViewState() {
       console.log('📍 Raw scroll positions:', result.currentViewState.scrollPositions);
       
       // Merge with current state to ensure we have the scrollPositions structure
+      console.log('🔧 Before merge - currentViewState:', currentViewState);
+      console.log('🔧 Merging with result.currentViewState:', result.currentViewState);
+      
+      // Preserve the saved scroll positions completely
+      const savedScrollPositions = result.currentViewState.scrollPositions || {};
+      console.log('🔧 Saved scroll positions to preserve:', savedScrollPositions);
+      
       currentViewState = {
         ...currentViewState,
         ...result.currentViewState,
         scrollPositions: {
-          pathwaysList: 0,
-          courseDetail: 0,
-          ...result.currentViewState.scrollPositions
+          pathwaysList: savedScrollPositions.pathwaysList || 0,
+          courseDetail: savedScrollPositions.courseDetail || 0
         }
       };
       
-      console.log('✅ Merged view state:', currentViewState);
+      console.log('🔧 After merge - scroll positions should be:', currentViewState.scrollPositions);
+      
+      // Safe logging of merged state
+      try {
+        console.log('✅ Merged view state (JSON):', JSON.stringify(currentViewState, null, 2));
+      } catch (e) {
+        console.log('✅ Merged view state (object has circular refs, showing properties):');
+        console.log('   - view:', currentViewState.view);
+        console.log('   - courseId:', currentViewState.courseId);
+        console.log('   - scrollPosition:', currentViewState.scrollPosition);
+        console.log('   - scrollPositions:', currentViewState.scrollPositions);
+      }
+      
       console.log('📍 Final scroll positions:', currentViewState.scrollPositions);
       console.log('🎯 Restored view:', currentViewState.view);
       console.log('📚 Restored course ID:', currentViewState.courseId);
+      
+      // Verify the merge worked correctly
+      if (!currentViewState.view || !currentViewState.scrollPositions) {
+        console.error('❌ MERGE FAILED - Missing critical properties!');
+        console.log('Raw result.currentViewState was:', result.currentViewState);
+      }
       
       // If we were in course detail view, restore it
       if (currentViewState.view === 'courseDetail' && currentViewState.courseId && currentUser) {
