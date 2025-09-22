@@ -1,5 +1,15 @@
-// Firebase Authentication for Chrome Extensions - Local files approach
+// Firebase Authentication for Chrome Extensions - v9+ modular web-extension
 console.log('Firebase auth loading...');
+
+// Import Firebase modules using web-extension compatible patterns
+import { initializeApp } from './firebase-app.mjs';
+import { 
+  initializeAuth, 
+  indexedDBLocalPersistence,
+  signInWithCredential, 
+  GoogleAuthProvider, 
+  signOut 
+} from './firebase-auth.mjs';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -10,9 +20,11 @@ const firebaseConfig = {
   appId: "1:1028034416026:web:e7d6d41d22e6d14f02fe23"
 };
 
-// Initialize Firebase (loaded from local files)
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+// Initialize Firebase with web-extension compatible auth
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = initializeAuth(firebaseApp, {
+  persistence: indexedDBLocalPersistence
+});
 
 // Export auth functions for use in popup.js
 window.firebaseAuth = {
@@ -38,11 +50,11 @@ window.firebaseAuth = {
       
       console.log('Got Google token, signing into Firebase...');
       
-      // Step 3: Create Firebase credential with the Google token (should work now!)
-      const credential = firebase.auth.GoogleAuthProvider.credential(null, token);
+      // Step 3: Create Firebase credential with the Google token
+      const credential = GoogleAuthProvider.credential(null, token);
       
-      // Step 4: Sign in to Firebase with the credential
-      const userCredential = await auth.signInWithCredential(credential);
+      // Step 4: Sign in to Firebase with the credential using modular API
+      const userCredential = await signInWithCredential(auth, credential);
       const user = userCredential.user;
       
       console.log('Firebase sign-in successful:', user.email);
@@ -91,10 +103,8 @@ window.firebaseAuth = {
   
   signOut: async () => {
     try {
-      // Sign out from Firebase if loaded
-      if (auth) {
-        await auth.signOut();
-      }
+      // Sign out from Firebase using modular API
+      await signOut(auth);
       
       // Remove Chrome identity token
       const token = await chrome.identity.getAuthToken({ interactive: false });
