@@ -625,7 +625,7 @@
 
       <!-- Create Plan Tab -->
       <div id="createPlanTab" class="tab-panel hidden">
-        <div class="chat-container">
+        <div id="createPlanSignedIn" class="chat-container">
           <div class="chat-messages" id="createPlanMessages">
             <div class="message ai">
               Let's create a new learning plan! What would you like to learn next?
@@ -641,40 +641,26 @@
             <button class="send-btn" id="sendCreatePlanBtn">Send</button>
           </div>
         </div>
+        
+        <div id="createPlanSignin" class="signin-content" style="display: none; text-align: center; padding: 40px 20px;">
+          <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 20px;">Create Your Learning Plan</h3>
+          <p style="color: #666; margin-bottom: 30px; line-height: 1.5;">
+            Sign in to create personalized learning plans with AI assistance and track your progress.
+          </p>
+          <button class="signin-btn" id="createPlanSigninBtn" style="background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%); color: white; border: none; padding: 12px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            Sign in with Google
+          </button>
+          <p style="margin-top: 20px; font-size: 13px; color: #888;">
+            <a href="#" id="browseExamplesLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Browse example plans</a> while you decide
+          </p>
+        </div>
       </div>
 
       <!-- Examples Tab -->
       <div id="examplesTab" class="tab-panel hidden">
         <div class="examples-content">
           <h3 style="margin-bottom: 20px; color: hsl(142, 35%, 42%);">Example Learning Plans</h3>
-          <div class="guest-plans">
-            <div class="guest-plan-card" data-plan="fullstack">
-              <div class="plan-card-header">
-                <h4>Full-Stack Web Development</h4>
-                <span class="plan-duration">12 weeks</span>
-              </div>
-              <p>Master HTML, CSS, JavaScript, React, and Node.js</p>
-              <button class="guest-plan-btn">View Learning Path</button>
-            </div>
-            
-            <div class="guest-plan-card" data-plan="datascience">
-              <div class="plan-card-header">
-                <h4>Data Science Fundamentals</h4>
-                <span class="plan-duration">10 weeks</span>
-              </div>
-              <p>Python, statistics, data analysis, and machine learning</p>
-              <button class="guest-plan-btn">View Learning Path</button>
-            </div>
-            
-            <div class="guest-plan-card" data-plan="mobile">
-              <div class="plan-card-header">
-                <h4>Mobile App Development</h4>
-                <span class="plan-duration">8 weeks</span>
-              </div>
-              <p>Build iOS and Android apps with React Native</p>
-              <button class="guest-plan-btn">View Learning Path</button>
-            </div>
-          </div>
+          <div id="examplePathwaysContainer"></div>
         </div>
       </div>
     </div>

@@ -156,6 +156,8 @@ async function signInWithFirebase() {
 }
 
 function switchTab(tabName, element) {
+  console.log('Switching to tab:', tabName);
+  
   // Update tab buttons
   document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.remove('active');
@@ -163,17 +165,21 @@ function switchTab(tabName, element) {
   element.classList.add('active');
   
   // Hide all tab panels
-  document.getElementById('currentPlanTab').classList.add('hidden');
-  document.getElementById('createPlanTab').classList.add('hidden');
-  document.getElementById('examplesTab').classList.add('hidden');
+  const panels = ['currentPlanTab', 'createPlanTab', 'examplesTab'];
+  panels.forEach(panelId => {
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('hidden');
+  });
   
   // Show selected tab content
   if (tabName === 'currentPlan') {
     document.getElementById('currentPlanTab').classList.remove('hidden');
   } else if (tabName === 'createPlan') {
     document.getElementById('createPlanTab').classList.remove('hidden');
+    updateCreatePlanView();
   } else if (tabName === 'examples') {
     document.getElementById('examplesTab').classList.remove('hidden');
+    renderExamplePathways();
   }
 }
 
@@ -186,6 +192,82 @@ function loadSelectedPlan() {
   
   currentPlan = plan;
   renderLessonsTable(plan.tableOfContents);
+}
+
+function updateCreatePlanView() {
+  const signinView = document.getElementById('createPlanSignin');
+  const signedInView = document.getElementById('createPlanSignedIn');
+  
+  if (currentUser) {
+    // User is signed in - show chat interface
+    if (signinView) signinView.style.display = 'none';
+    if (signedInView) signedInView.style.display = 'block';
+  } else {
+    // User not signed in - show signin prompt
+    if (signinView) signinView.style.display = 'block';
+    if (signedInView) signedInView.style.display = 'none';
+  }
+}
+
+// Make function globally available
+window.renderExamplePathways = function() {
+  const container = document.getElementById('examplePathwaysContainer');
+  if (!container) return;
+  
+  const pathwaysHtml = Object.entries(samplePlans).map(([key, plan]) => `
+    <div class="guest-plan-card" data-plan="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white;">
+      <div class="plan-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${plan.title}</h4>
+        <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.tableOfContents.length} lessons</span>
+      </div>
+      <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.4;">${plan.description}</p>
+      <div class="pathway-topics" style="margin-bottom: 16px;">
+        ${plan.tableOfContents.slice(0, 3).map(item => 
+          `<span style="display: inline-block; background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; margin-bottom: 4px;">${item.title}</span>`
+        ).join('')}
+        ${plan.tableOfContents.length > 3 ? '<span style="color: #999; font-size: 12px;">+' + (plan.tableOfContents.length - 3) + ' more...</span>' : ''}
+      </div>
+      <button class="guest-plan-btn" onclick="showPathwayDetails('${key}')" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        View Full Pathway
+      </button>
+    </div>
+  `).join('');
+  
+  container.innerHTML = pathwaysHtml;
+}
+
+// Make function globally available for onclick handlers
+window.showPathwayDetails = function(planKey) {
+  const plan = samplePlans[planKey];
+  if (!plan) return;
+  
+  const detailsHtml = `
+    <div style="padding: 20px; background: white; border-radius: 8px; border: 1px solid #e1e5e9;">
+      <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 16px;">${plan.title}</h3>
+      <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">${plan.description}</p>
+      <div class="lessons-list">
+        ${plan.tableOfContents.map((lesson, index) => `
+          <div style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px;">
+              ${index + 1}
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 500; color: #333; margin-bottom: 2px;">${lesson.title}</div>
+              <div style="font-size: 12px; color: #888;">${lesson.timeline}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button onclick="renderExamplePathways()" style="margin-top: 20px; background: transparent; color: hsl(142, 35%, 42%); border: 1px solid #ddd; padding: 8px 16px; border-radius: 16px; font-size: 13px; cursor: pointer;">
+        ← Back to Examples
+      </button>
+    </div>
+  `;
+  
+  const container = document.getElementById('examplePathwaysContainer');
+  if (container) {
+    container.innerHTML = detailsHtml;
+  }
 }
 
 function constructPrompt(plan, contentItem) {
@@ -327,34 +409,61 @@ document.addEventListener('DOMContentLoaded', () => {
     guestSigninBtn.addEventListener('click', () => showScreen('signinScreen'));
   }
   
-  // Tab switching
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      const tabName = e.target.dataset.tab;
-      switchTab(tabName, e.target);
+  // Tab switching with delay to ensure DOM is ready
+  setTimeout(() => {
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Tab clicked:', e.target.dataset.tab);
+        const tabName = e.target.dataset.tab;
+        if (tabName) {
+          switchTab(tabName, e.target);
+        }
+      });
     });
-  });
+  }, 100);
 
-  // Add examples navigation links
-  const checkExamplesLink = document.getElementById('checkExamplesLink');
-  if (checkExamplesLink) {
-    checkExamplesLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Switch to examples tab
-      const examplesTabBtn = document.getElementById('examplesTabBtn');
-      switchTab('examples', examplesTabBtn);
-    });
-  }
+  // Add examples navigation links with delay
+  setTimeout(() => {
+    const checkExamplesLink = document.getElementById('checkExamplesLink');
+    if (checkExamplesLink) {
+      checkExamplesLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Check examples link clicked');
+        const examplesTabBtn = document.getElementById('examplesTabBtn');
+        if (examplesTabBtn) {
+          switchTab('examples', examplesTabBtn);
+        }
+      });
+    }
 
-  const chatPageLink = document.getElementById('chatPageLink');
-  if (chatPageLink) {
-    chatPageLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Switch to examples tab
-      const examplesTabBtn = document.getElementById('examplesTabBtn');
-      switchTab('examples', examplesTabBtn);
-    });
-  }
+    const chatPageLink = document.getElementById('chatPageLink');
+    if (chatPageLink) {
+      chatPageLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const examplesTabBtn = document.getElementById('examplesTabBtn');
+        if (examplesTabBtn) {
+          switchTab('examples', examplesTabBtn);
+        }
+      });
+    }
+
+    const browseExamplesLink = document.getElementById('browseExamplesLink');
+    if (browseExamplesLink) {
+      browseExamplesLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const examplesTabBtn = document.getElementById('examplesTabBtn');
+        if (examplesTabBtn) {
+          switchTab('examples', examplesTabBtn);
+        }
+      });
+    }
+
+    const createPlanSigninBtn = document.getElementById('createPlanSigninBtn');
+    if (createPlanSigninBtn) {
+      createPlanSigninBtn.addEventListener('click', signInWithFirebase);
+    }
+  }, 100);
   
   // Check if user is already logged in (from storage)
   chrome.storage.local.get(['currentUser'], (result) => {
