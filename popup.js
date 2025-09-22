@@ -257,23 +257,21 @@ async function sendChatMessage() {
       
       addMessageToChat('ai', aiContent, 'chatMessages');
       
+      // Debug logging removed for production
+      
       // Check if AI can automatically generate a plan
       if (result.can_generate_plan && result.plan_parameters) {
-        console.log('🤖 AI can generate plan automatically:', result.plan_parameters);
+        // Auto-generating plan with API-provided parameters
         setTimeout(async () => {
           await handleAutomaticPlanGeneration(result.plan_parameters, 'chatMessages');
         }, 1000);
       }
-      // Check if AI suggests plan generation
-      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
-        // Show plan generation options in main chat
-        showPlanGenerationOptionsInMainChat();
-      } else if (aiContent.toLowerCase().includes('create') && aiContent.toLowerCase().includes('plan')) {
-        // Auto-suggest plan generation if AI mentions creating a plan
-        setTimeout(() => {
-          addMessageToChat('ai', 'I can create a personalized learning plan for you! Would you like me to generate one based on our conversation?', 'chatMessages');
-          showPlanGenerationOptionsInMainChat();
-        }, 1000);
+      // Only auto-generate when API explicitly indicates readiness with proper parameters
+      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion' && result.plan_parameters) {
+        // API suggests plan generation - triggering automatic generation
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'chatMessages');
+        }, 1500);
       }
     }
     
@@ -323,23 +321,21 @@ async function sendCreatePlanMessage() {
       
       addMessageToChat('ai', aiContent, 'createPlanMessages');
       
+      // Debug logging removed for production
+      
       // Check if AI can automatically generate a plan
       if (result.can_generate_plan && result.plan_parameters) {
-        console.log('🤖 AI can generate plan automatically:', result.plan_parameters);
+        // Auto-generating plan with API-provided parameters
         setTimeout(async () => {
           await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
         }, 1000);
       }
-      // Check if AI suggests plan generation or if content indicates readiness to create a plan
-      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
-        // Show plan generation options
-        showPlanGenerationOptions();
-      } else if (aiContent.toLowerCase().includes('create') && aiContent.toLowerCase().includes('plan')) {
-        // Auto-suggest plan generation if AI mentions creating a plan
-        setTimeout(() => {
-          addMessageToChat('ai', 'I can create a personalized learning plan for you! Would you like me to generate one based on our conversation?', 'createPlanMessages');
-          showPlanGenerationOptions();
-        }, 1000);
+      // Only auto-generate when API explicitly indicates readiness with proper parameters
+      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion' && result.plan_parameters) {
+        // API suggests plan generation - triggering automatic generation
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
+        }, 1500);
       }
     }
     
@@ -664,7 +660,7 @@ function createPlanPreviewElement(plan, isMainChat = false) {
 // Automatic Plan Generation Handler
 async function handleAutomaticPlanGeneration(planParameters, containerId) {
   try {
-    console.log('🚀 Starting automatic plan generation with parameters:', planParameters);
+    // Starting automatic plan generation with API-provided parameters
     
     // Show loading message
     addMessageToChat('ai', '⚡ Generating your personalized learning plan...', containerId);
@@ -678,7 +674,7 @@ async function handleAutomaticPlanGeneration(planParameters, containerId) {
       goals: planParameters.goals || 'Build understanding and practical skills'
     };
     
-    console.log('📋 Plan parameters prepared:', params);
+    // Plan parameters prepared for API call
     
     // Generate the plan
     const plan = await generatePlan(params);
@@ -703,125 +699,9 @@ async function handleAutomaticPlanGeneration(planParameters, containerId) {
   }
 }
 
-// Plan Generation UI Functions
-function showPlanGenerationOptions() {
-  const container = document.getElementById('createPlanMessages');
-  const planUI = document.createElement('div');
-  planUI.id = 'planGenerationUI';
-  planUI.className = 'plan-generation-ui';
-  planUI.style.cssText = `
-    background: #f8f9fa;
-    border: 1px solid #e1e5e9;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 16px 0;
-  `;
-  
-  planUI.innerHTML = `
-    <h4 style="margin: 0 0 16px 0; color: hsl(142, 35%, 42%);">🎯 Create Your Learning Plan</h4>
-    <p style="margin: 0 0 16px 0; color: #666; font-size: 14px;">Let me generate a personalized learning plan for you. Please specify your preferences:</p>
-    
-    <div style="display: grid; gap: 12px;">
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Subject/Topic:</label>
-        <input type="text" id="planSubject" placeholder="e.g., Web Development, Data Science" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-      </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
-          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Skill Level:</label>
-          <select id="planSkillLevel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-        </div>
-        
-        <div>
-          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Timeline:</label>
-          <select id="planTimeline" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-            <option value="2 weeks">2 weeks</option>
-            <option value="4 weeks" selected>4 weeks</option>
-            <option value="8 weeks">8 weeks</option>
-            <option value="12 weeks">12 weeks</option>
-            <option value="6 months">6 months</option>
-          </select>
-        </div>
-      </div>
-      
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Daily Time Commitment:</label>
-        <select id="planDailyTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-          <option value="30 minutes">30 minutes</option>
-          <option value="1 hour" selected>1 hour</option>
-          <option value="2 hours">2 hours</option>
-          <option value="3+ hours">3+ hours</option>
-        </select>
-      </div>
-      
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Learning Goals:</label>
-        <textarea id="planGoals" placeholder="What specific outcomes do you want to achieve?" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; height: 60px; resize: vertical;"></textarea>
-      </div>
-    </div>
-    
-    <div style="display: flex; gap: 12px; margin-top: 16px;">
-      <button id="generatePlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
-        ✨ Generate Learning Plan
-      </button>
-      <button id="cancelPlanBtn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-        Cancel
-      </button>
-    </div>
-  `;
-  
-  container.appendChild(planUI);
-  container.scrollTop = container.scrollHeight;
-  
-  // Add event listeners
-  document.getElementById('generatePlanBtn').addEventListener('click', handlePlanGeneration);
-  document.getElementById('cancelPlanBtn').addEventListener('click', () => {
-    planUI.remove();
-  });
-}
+// Plan Generation UI Functions removed - now purely conversation-driven
 
-async function handlePlanGeneration() {
-  const generateBtn = document.getElementById('generatePlanBtn');
-  const originalText = generateBtn.textContent;
-  generateBtn.disabled = true;
-  generateBtn.textContent = 'Generating Plan...';
-  
-  try {
-    const subject = document.getElementById('planSubject').value.trim() || 'General learning goal';
-    const skillLevel = document.getElementById('planSkillLevel').value;
-    const timeline = document.getElementById('planTimeline').value;
-    const dailyTime = document.getElementById('planDailyTime').value;
-    const goals = document.getElementById('planGoals').value.trim() || 'Build understanding and practical skills';
-    
-    const plan = await generatePlan({
-      subject,
-      skillLevel,
-      timeline,
-      dailyTime,
-      goals
-    });
-    
-    // Remove the generation UI
-    document.getElementById('planGenerationUI').remove();
-    
-    // Show the generated plan
-    showGeneratedPlan(plan);
-    
-    // Save plan to conversation history
-    await savePlanToHistory(plan, 'createPlanMessages');
-    
-  } catch (error) {
-    console.error('Error generating plan:', error);
-    addMessageToChat('ai', 'Sorry, I encountered an error while generating your plan. Please try again.', 'createPlanMessages');
-    generateBtn.disabled = false;
-    generateBtn.textContent = originalText;
-  }
-}
+// Manual plan generation handlers removed - now purely conversation-driven
 
 function showGeneratedPlan(plan) {
   const container = document.getElementById('createPlanMessages');
@@ -937,125 +817,9 @@ function showPlanDetails(plan) {
   container.scrollTop = container.scrollHeight;
 }
 
-// Plan Generation UI for Main Chat
-function showPlanGenerationOptionsInMainChat() {
-  const container = document.getElementById('chatMessages');
-  const planUI = document.createElement('div');
-  planUI.id = 'mainChatPlanGenerationUI';
-  planUI.className = 'plan-generation-ui';
-  planUI.style.cssText = `
-    background: #f8f9fa;
-    border: 1px solid #e1e5e9;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 16px 0;
-  `;
-  
-  planUI.innerHTML = `
-    <h4 style="margin: 0 0 16px 0; color: hsl(142, 35%, 42%);">🎯 Create Your Learning Plan</h4>
-    <p style="margin: 0 0 16px 0; color: #666; font-size: 14px;">Let me generate a personalized learning plan for you. Please specify your preferences:</p>
-    
-    <div style="display: grid; gap: 12px;">
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Subject/Topic:</label>
-        <input type="text" id="mainPlanSubject" placeholder="e.g., Web Development, Data Science" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-      </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
-          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Skill Level:</label>
-          <select id="mainPlanSkillLevel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-        </div>
-        
-        <div>
-          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Timeline:</label>
-          <select id="mainPlanTimeline" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-            <option value="2 weeks">2 weeks</option>
-            <option value="4 weeks" selected>4 weeks</option>
-            <option value="8 weeks">8 weeks</option>
-            <option value="12 weeks">12 weeks</option>
-            <option value="6 months">6 months</option>
-          </select>
-        </div>
-      </div>
-      
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Daily Time Commitment:</label>
-        <select id="mainPlanDailyTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-          <option value="30 minutes">30 minutes</option>
-          <option value="1 hour" selected>1 hour</option>
-          <option value="2 hours">2 hours</option>
-          <option value="3+ hours">3+ hours</option>
-        </select>
-      </div>
-      
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Learning Goals:</label>
-        <textarea id="mainPlanGoals" placeholder="What specific outcomes do you want to achieve?" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; height: 60px; resize: vertical;"></textarea>
-      </div>
-    </div>
-    
-    <div style="display: flex; gap: 12px; margin-top: 16px;">
-      <button id="mainGeneratePlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
-        ✨ Generate Learning Plan
-      </button>
-      <button id="mainCancelPlanBtn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-        Cancel
-      </button>
-    </div>
-  `;
-  
-  container.appendChild(planUI);
-  container.scrollTop = container.scrollHeight;
-  
-  // Add event listeners
-  document.getElementById('mainGeneratePlanBtn').addEventListener('click', handleMainChatPlanGeneration);
-  document.getElementById('mainCancelPlanBtn').addEventListener('click', () => {
-    planUI.remove();
-  });
-}
+// Main chat plan generation UI removed - now purely conversation-driven
 
-async function handleMainChatPlanGeneration() {
-  const generateBtn = document.getElementById('mainGeneratePlanBtn');
-  const originalText = generateBtn.textContent;
-  generateBtn.disabled = true;
-  generateBtn.textContent = 'Generating Plan...';
-  
-  try {
-    const subject = document.getElementById('mainPlanSubject').value.trim() || 'General learning goal';
-    const skillLevel = document.getElementById('mainPlanSkillLevel').value;
-    const timeline = document.getElementById('mainPlanTimeline').value;
-    const dailyTime = document.getElementById('mainPlanDailyTime').value;
-    const goals = document.getElementById('mainPlanGoals').value.trim() || 'Build understanding and practical skills';
-    
-    const plan = await generatePlan({
-      subject,
-      skillLevel,
-      timeline,
-      dailyTime,
-      goals
-    });
-    
-    // Remove the generation UI
-    document.getElementById('mainChatPlanGenerationUI').remove();
-    
-    // Show the generated plan in main chat
-    showGeneratedPlanInMainChat(plan);
-    
-    // Save plan to conversation history
-    await savePlanToHistory(plan, 'chatMessages');
-    
-  } catch (error) {
-    console.error('Error generating plan:', error);
-    addMessageToChat('ai', 'Sorry, I encountered an error while generating your plan. Please try again.', 'chatMessages');
-    generateBtn.disabled = false;
-    generateBtn.textContent = originalText;
-  }
-}
+// Main chat manual plan generation handlers removed - now purely conversation-driven
 
 function showGeneratedPlanInMainChat(plan) {
   // Add success message
