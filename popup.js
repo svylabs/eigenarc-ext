@@ -14,133 +14,183 @@ let currentViewState = {
 };
 let currentTab = 'currentPlan';
 
-// Sample learning plans data
+// Sample learning plans data - using real course structure
 const samplePlans = {
-  fullstack: {
-    title: "Full-Stack Web Development",
-    description: "A comprehensive program covering frontend and backend development technologies.",
+  screenrecorder: {
+    id: "example-screen-recorder",
+    title: "Build a Browser-Based Screen Recorder in 2 Weeks",
+    description: "This 2-week plan will guide you through building a fully functional browser-based screen recorder. Leveraging your existing React skills, you will master the necessary browser Media APIs to capture screen, camera, and microphone audio, culminating in a complete application perfect for creating tutorials.",
+    duration: "2 weeks",
+    dailyTime: "1 hour per day",
+    skillLevel: "intermediate",
     phases: [
       {
-        title: "Frontend Fundamentals",
-        lessons: [
-          { id: "fs-1-1", title: "HTML Structure and Semantics" },
-          { id: "fs-1-2", title: "CSS Styling and Layout" },
-          { id: "fs-1-3", title: "JavaScript Basics and ES6" },
-          { id: "fs-1-4", title: "DOM Manipulation" }
+        title: "Phase 1: Core Browser APIs & Project Setup",
+        duration: "Week 1",
+        description: "This week focuses on understanding the essential browser APIs for capturing media. You'll work with vanilla JavaScript first to learn these concepts before integrating them into a React project.",
+        tasks: [
+          "Day 1-2: Master Screen Capture: Study and implement `getDisplayMedia()` to capture the user's screen. Create a simple HTML page to test this.",
+          "Day 3-4: Integrate Camera & Audio: Learn `getUserMedia()` to access the webcam and microphone, then explore how to combine these media streams.",
+          "Day 5-6: Record & Save Data: Get hands-on with the `MediaRecorder` API to record the combined stream and handle the resulting data chunks.",
+          "Day 7: Set Up Your React Environment: Initialize a new React project and create the basic component structure for your recorder UI."
         ]
       },
       {
-        title: "Frontend Frameworks",
-        lessons: [
-          { id: "fs-2-1", title: "React Components and JSX" },
-          { id: "fs-2-2", title: "State Management with Hooks" },
-          { id: "fs-2-3", title: "React Router and Navigation" },
-          { id: "fs-2-4", title: "API Integration" }
+        title: "Phase 2: React Integration & Feature Implementation",
+        duration: "Week 2",
+        description: "Now you'll apply your API knowledge to build the screen recorder application using React. You will create the user interface and wire up all the recording functionality.",
+        tasks: [
+          "Day 8-9: Build the UI: Create React components for the control buttons (Start, Stop), video preview area, and download link.",
+          "Day 10-11: Implement Recording Logic: Use React hooks (`useState`, `useEffect`, `useRef`) to manage media streams, recording state, and the `MediaRecorder` instance.",
+          "Day 12-13: Handle the Video Output: Implement the logic to stop the recording, create a downloadable video file from the recorded data, and present it to the user.",
+          "Day 14: Final Polish & Review: Refine the user interface, add user-facing messages (e.g., 'Recording...'), and clean up your code for clarity."
+        ]
+      }
+    ],
+    enrolledAt: "2025-09-20T10:00:00.000Z",
+    isCompleted: false,
+    currentPhase: 0,
+    progress: []
+  },
+  cryptography: {
+    id: "example-cryptography",
+    title: "Practical Cryptography: From Theory to Code",
+    description: "This 5-month plan is designed for individuals with basic math and programming knowledge to progressively learn cryptographic concepts and apply them by implementing core algorithms. You will journey from classical ciphers to modern symmetric and asymmetric systems, culminating in a solid practical understanding of cryptographic primitives.",
+    duration: "20 weeks",
+    dailyTime: "1 hour per day",
+    skillLevel: "beginner",
+    phases: [
+      {
+        title: "Phase 1: Foundations and Classical Ciphers",
+        duration: "Weeks 1-4",
+        description: "Establish a strong foundation in the essential mathematics and historical context of cryptography. You will implement your first simple ciphers to understand the basic principles of encryption and cryptanalysis.",
+        tasks: [
+          "Study foundational concepts: confidentiality, integrity, and availability.",
+          "Review essential math: modular arithmetic, prime numbers, and basic probability.",
+          "Implement the Caesar Cipher and a frequency analysis tool to break it.",
+          "Implement the Vigenère Cipher, a classic polyalphabetic cipher."
         ]
       },
       {
-        title: "Backend Development",
-        lessons: [
-          { id: "fs-3-1", title: "Node.js and Express Setup" },
-          { id: "fs-3-2", title: "RESTful API Design" },
-          { id: "fs-3-3", title: "Authentication and Security" },
-          { id: "fs-3-4", title: "Database Integration" }
+        title: "Phase 2: Symmetric Cryptography",
+        duration: "Weeks 5-10",
+        description: "Dive into modern secret-key cryptography, focusing on block ciphers and stream ciphers. You will understand the building blocks of systems like AES and implement a block cipher with a standard mode of operation.",
+        tasks: [
+          "Learn about stream ciphers and implement a simple one like RC4.",
+          "Study the structure of block ciphers, including SPNs and Feistel Networks.",
+          "Understand the Advanced Encryption Standard (AES) conceptually.",
+          "Implement a block cipher mode of operation, such as Cipher Block Chaining (CBC), using a provided block cipher primitive."
         ]
       },
       {
-        title: "Full-Stack Integration",
-        lessons: [
-          { id: "fs-4-1", title: "Connecting Frontend to Backend" },
-          { id: "fs-4-2", title: "Deployment and Hosting" },
-          { id: "fs-4-3", title: "Testing and Debugging" },
-          { id: "fs-4-4", title: "Final Project" }
+        title: "Phase 3: Asymmetric Cryptography",
+        duration: "Weeks 11-16",
+        description: "Explore the world of public-key cryptography. This phase covers the mathematics behind key exchange and digital signatures, enabling you to implement two of the most influential algorithms in the field.",
+        tasks: [
+          "Learn the principles of public-key cryptography and one-way functions.",
+          "Study the number theory behind RSA: Euler's totient theorem and prime factorization.",
+          "Implement the RSA algorithm for encryption and decryption.",
+          "Understand and implement the Diffie-Hellman Key Exchange protocol."
         ]
+      }
+    ],
+    enrolledAt: "2025-09-19T03:53:24.521Z",
+    isCompleted: false,
+    currentPhase: 0,
+    progress: []
+  },
+  quantummechanics: {
+    id: "example-quantum-mechanics",
+    title: "Mastering Quantum Mechanics Notation",
+    description: "An 8-week action plan designed to take you from a high school math and physics background to confidently understanding the mathematical notations used in quantum mechanics scientific papers.",
+    duration: "8 weeks",
+    dailyTime: "1 hour",
+    skillLevel: "beginner",
+    phases: [
+      {
+        title: "Phase 1: Building the Mathematical Foundation",
+        duration: "Weeks 1-2",
+        description: "This phase focuses on the essential mathematics that underpins quantum mechanics, bridging the gap from high school math to the required concepts in linear algebra and complex numbers.",
+        tasks: [
+          "Review complex numbers: conjugates, modulus, and Euler's formula.",
+          "Learn the fundamentals of linear algebra: vector spaces, basis vectors, and linear independence.",
+          "Understand matrix operations: addition, multiplication, transpose, and the Hermitian conjugate.",
+          "Study the concepts of eigenvalues and eigenvectors, which are crucial for describing quantum states."
+        ]
+      },
+      {
+        title: "Phase 2: Introduction to Bra-Ket Notation",
+        duration: "Weeks 3-4",
+        description: "Dive into the core language of quantum mechanics: Dirac's bra-ket notation. You will learn how to represent quantum states, measurements, and operators in this powerful formalism.",
+        tasks: [
+          "Learn to represent quantum states as 'kets' |ψ⟩ and their duals as 'bras' ⟨ψ|.",
+          "Understand how the inner product ⟨φ|ψ⟩ represents the probability amplitude of transitioning from state ψ to state φ.",
+          "Explore how 'operators' act on kets to represent physical observables.",
+          "Practice translating simple quantum concepts into bra-ket notation."
+        ]
+      }
+    ],
+    enrolledAt: "2025-09-12T22:36:41.679Z",
+    isCompleted: false,
+    currentPhase: 0,
+    progress: [
+      {
+        id: "progress-1",
+        courseId: "example-quantum-mechanics",
+        phaseIndex: 0,
+        taskIndex: 0,
+        isCompleted: true,
+        completedAt: "2025-09-12T23:15:01.802Z"
+      },
+      {
+        id: "progress-2",
+        courseId: "example-quantum-mechanics",
+        phaseIndex: 0,
+        taskIndex: 1,
+        isCompleted: true,
+        completedAt: "2025-09-12T23:15:04.208Z"
       }
     ]
   },
-  datascience: {
-    title: "Data Science Fundamentals",
-    description: "Learn Python, statistics, data analysis, and machine learning.",
+  chromeextension: {
+    id: "example-chrome-extension",
+    title: "Chrome Extension with Google Auth & Storage",
+    description: "This 2-week plan will guide you through building a functional Chrome extension from the ground up. You will learn to create the extension's structure, manage local data storage, and integrate secure Google Authentication for user sign-in.",
+    duration: "2 weeks",
+    dailyTime: "1 hour per day",
+    skillLevel: "intermediate",
     phases: [
       {
-        title: "Python Programming",
-        lessons: [
-          { id: "ds-1-1", title: "Python Syntax and Data Types" },
-          { id: "ds-1-2", title: "Control Flow and Functions" },
-          { id: "ds-1-3", title: "Object-Oriented Programming" },
-          { id: "ds-1-4", title: "File Handling and Modules" }
+        title: "Week 1: Core Extension & Local Data Storage",
+        duration: "Week 1",
+        description: "Build the fundamental structure of a Chrome extension, create a user interface, and learn how to store and retrieve data using Chrome's storage API.",
+        tasks: [
+          "Day 1: Set up your project with the essential `manifest.json` (v3), `popup.html`, and `popup.js` files.",
+          "Day 2: Build the basic UI for your popup using HTML and CSS, including input fields and buttons.",
+          "Day 3: Implement logic to save user input to `chrome.storage.local`.",
+          "Day 4: Write code to retrieve and display the saved data when the popup is opened.",
+          "Day 5: Understand and add a background script (`service_worker`) for tasks like handling extension installation events.",
+          "Day 6 & 7: Solidify your knowledge by building a simple 'Quick Note' extension that saves and lists multiple notes."
         ]
       },
       {
-        title: "Data Analysis",
-        lessons: [
-          { id: "ds-2-1", title: "NumPy for Numerical Computing" },
-          { id: "ds-2-2", title: "Pandas for Data Manipulation" },
-          { id: "ds-2-3", title: "Data Cleaning Techniques" },
-          { id: "ds-2-4", title: "Exploratory Data Analysis" }
-        ]
-      },
-      {
-        title: "Data Visualization",
-        lessons: [
-          { id: "ds-3-1", title: "Matplotlib Basics" },
-          { id: "ds-3-2", title: "Seaborn for Statistical Plots" },
-          { id: "ds-3-3", title: "Interactive Visualizations" },
-          { id: "ds-3-4", title: "Dashboard Creation" }
-        ]
-      },
-      {
-        title: "Machine Learning",
-        lessons: [
-          { id: "ds-4-1", title: "ML Algorithms Overview" },
-          { id: "ds-4-2", title: "Supervised Learning" },
-          { id: "ds-4-3", title: "Unsupervised Learning" },
-          { id: "ds-4-4", title: "Model Evaluation and Deployment" }
+        title: "Week 2: Google Authentication & Integration",
+        duration: "Week 2", 
+        description: "Integrate Google Sign-In using OAuth2, manage user sessions, and combine all features into a finished, personalized project.",
+        tasks: [
+          "Day 8: Set up a project in the Google Cloud Console and get your OAuth 2.0 Client ID.",
+          "Day 9: Add the necessary permissions to your manifest and implement a 'Login' button that uses `chrome.identity.getAuthToken` to initiate the sign-in flow.",
+          "Day 10: Use the retrieved auth token to fetch user profile information from the Google API.",
+          "Day 11: Manage user state by saving profile info to storage and dynamically updating the UI to show a logged-in view.",
+          "Day 12: Implement a 'Logout' button that revokes the token using `chrome.identity.removeCachedAuthToken` and clears user data.",
+          "Day 13 & 14: Combine the notes functionality from Week 1 with the Google Auth. Tie saved data to the specific logged-in user and perform final testing and UI polishing."
         ]
       }
-    ]
-  },
-  mobile: {
-    title: "Mobile App Development",
-    description: "Build cross-platform mobile apps with React Native.",
-    phases: [
-      {
-        title: "React Native Basics",
-        lessons: [
-          { id: "mb-1-1", title: "Development Environment Setup" },
-          { id: "mb-1-2", title: "React Native Components" },
-          { id: "mb-1-3", title: "Styling and Flexbox" },
-          { id: "mb-1-4", title: "State and Props" }
-        ]
-      },
-      {
-        title: "Navigation and UX",
-        lessons: [
-          { id: "mb-2-1", title: "Stack Navigation" },
-          { id: "mb-2-2", title: "Tab Navigation" },
-          { id: "mb-2-3", title: "Drawer Navigation" },
-          { id: "mb-2-4", title: "UI/UX Best Practices" }
-        ]
-      },
-      {
-        title: "Advanced Features",
-        lessons: [
-          { id: "mb-3-1", title: "API Integration" },
-          { id: "mb-3-2", title: "Local Storage" },
-          { id: "mb-3-3", title: "Push Notifications" },
-          { id: "mb-3-4", title: "Camera and Media" }
-        ]
-      },
-      {
-        title: "Deployment",
-        lessons: [
-          { id: "mb-4-1", title: "App Store Guidelines" },
-          { id: "mb-4-2", title: "Building for iOS" },
-          { id: "mb-4-3", title: "Building for Android" },
-          { id: "mb-4-4", title: "App Distribution" }
-        ]
-      }
-    ]
+    ],
+    enrolledAt: "2025-09-20T10:47:54.416Z",
+    isCompleted: false,
+    currentPhase: 0,
+    progress: []
   }
 };
 
@@ -1396,127 +1446,71 @@ window.showPathwayDetails = function(planKey) {
   const plan = samplePlans[planKey];
   if (!plan) return;
   
-  const detailsHtml = `
-    <div style="padding: 20px; background: white; border-radius: 8px; border: 1px solid #e1e5e9;">
-      <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 16px;">${plan.title}</h3>
-      <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">${plan.description}</p>
-      <div class="phases-tree">
-        ${plan.phases.map((phase, phaseIndex) => `
-          <div class="phase-section" style="margin-bottom: 24px;">
-            <div class="phase-header" style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;" data-phase-index="${phaseIndex}">
-              <span class="expand-icon" style="margin-right: 8px; font-size: 12px; transition: transform 0.2s;">▼</span>
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: hsl(142, 35%, 42%); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px;">
-                ${phaseIndex + 1}
-              </div>
-              <div>
-                <div style="font-weight: 600; color: #333; font-size: 15px;">${phase.title}</div>
-                <div style="font-size: 12px; color: #888;">${phase.lessons.length} lessons</div>
-              </div>
-            </div>
-            <div class="lessons-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
-              ${phase.lessons.map((lesson, lessonIndex) => {
-                const isCompleted = isLessonCompleted(lesson.id);
-                return `
-                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}">
-                  <div class="lesson-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
-                    ${isCompleted ? '✓' : lessonIndex + 1}
-                  </div>
-                  <div style="flex: 1;">
-                    <div class="lesson-title" style="font-weight: 500; color: #333; font-size: 14px; text-decoration: ${isCompleted ? 'line-through' : 'none'}; opacity: ${isCompleted ? '0.6' : '1'};">${lesson.title}</div>
-                  </div>
-                  <div style="color: #999; font-size: 12px; margin-left: 8px;">→</div>
-                </div>
-              `;
-              }).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <button id="backToExamplesBtn" style="margin-top: 20px; background: transparent; color: hsl(142, 35%, 42%); border: 1px solid #ddd; padding: 8px 16px; border-radius: 16px; font-size: 13px; cursor: pointer;">
-        ← Back to Examples
-      </button>
-    </div>
-  `;
+  // Hide the examples pathways list and show course detail view
+  const examplePathwaysList = document.getElementById('examplePathways');
+  const courseDetailView = document.getElementById('courseDetailView');
   
-  const container = document.getElementById('examplePathwaysContainer');
-  if (container) {
-    container.innerHTML = detailsHtml;
+  if (examplePathwaysList && courseDetailView) {
+    examplePathwaysList.style.display = 'none';
+    courseDetailView.style.display = 'block';
     
-    // Add back button event listener
-    const backBtn = container.querySelector('#backToExamplesBtn');
-    if (backBtn) {
-      backBtn.addEventListener('click', () => {
-        renderExamplePathways();
-      });
-    }
+    // Update view state
+    currentViewState.view = 'courseDetail';
+    currentViewState.courseId = plan.id;
     
-    // Add collapse/expand functionality for phases
-    container.querySelectorAll('.phase-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const phaseIndex = header.getAttribute('data-phase-index');
-        const lessonsContainer = container.querySelector(`.lessons-container[data-phase-index="${phaseIndex}"]`);
-        const expandIcon = header.querySelector('.expand-icon');
-        
-        const isCollapsed = lessonsContainer.style.display === 'none';
-        lessonsContainer.style.display = isCollapsed ? '' : 'none';
-        expandIcon.textContent = isCollapsed ? '▼' : '▶';
-      });
-    });
+    // Use the existing showCourseDetails function with the example plan data
+    showCourseDetails(plan);
     
-    // Add lesson click functionality and hover effects using delegated events
-    container.addEventListener('click', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (!lessonItem) return;
-      
-      const clickedPlanKey = lessonItem.getAttribute('data-plan');
-      const phaseIndex = lessonItem.getAttribute('data-phase');
-      const lessonIndex = lessonItem.getAttribute('data-lesson-index');
-      
-      const plan = samplePlans[clickedPlanKey];
-      if (!plan) return;
-      
-      const phase = plan.phases[parseInt(phaseIndex)];
-      const lesson = phase.lessons[parseInt(lessonIndex)];
-      
-      // Set currentPlan for the selectLesson function
-      currentPlan = plan;
-      
-      // Toggle lesson completion
-      const isCompleted = toggleLessonCompletion(lesson.id);
-      
-      // Update visual state
-      const lessonTitle = lessonItem.querySelector('.lesson-title');
-      const lessonBadge = lessonItem.querySelector('.lesson-badge');
-      
-      if (lessonTitle) {
-        lessonTitle.style.textDecoration = isCompleted ? 'line-through' : 'none';
-        lessonTitle.style.opacity = isCompleted ? '0.6' : '1';
+    // Add custom back button for examples after a brief delay
+    setTimeout(() => {
+      const courseDetailContent = document.getElementById('courseDetailContent');
+      if (courseDetailContent) {
+        // Add a back to examples button at the top
+        const backButton = document.createElement('div');
+        backButton.innerHTML = `
+          <button onclick="backToExamples()" style="
+            background: #6c757d; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          ">
+            ← Back to Examples
+          </button>
+        `;
+        courseDetailContent.prepend(backButton);
       }
-      
-      if (lessonBadge) {
-        lessonBadge.textContent = isCompleted ? '✓' : (parseInt(lessonIndex) + 1);
-      }
-      
-      // Use existing selectLesson function to inject prompt into ChatGPT
-      selectLesson({ title: lesson.title, timeline: '' });
-    });
-    
-    // Add hover effects using delegated events
-    container.addEventListener('mouseenter', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (lessonItem) {
-        lessonItem.style.background = '#f8f9fa';
-      }
-    }, true);
-    
-    container.addEventListener('mouseleave', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (lessonItem) {
-        lessonItem.style.background = 'transparent';
-      }
-    }, true);
+    }, 100);
   }
 }
+
+// Function to go back to examples list from course detail view
+function backToExamples() {
+  const examplePathways = document.getElementById('examplePathways');
+  const courseDetailView = document.getElementById('courseDetailView');
+  
+  // Save current scroll position before switching views
+  saveScrollPosition();
+  
+  if (courseDetailView) courseDetailView.style.display = 'none';
+  if (examplePathways) examplePathways.style.display = 'block';
+  
+  // Update view state
+  currentViewState.view = 'pathwaysList';
+  currentViewState.courseId = null;
+  console.log('*** VIEW CHANGED TO examplePathways');
+  
+  // Save state and restore scroll position
+  saveViewState();
+  restoreScrollPosition();
+}
+
 
 function constructPrompt(plan, contentItem) {
   return `Learning Plan: ${plan.title}
