@@ -629,7 +629,7 @@ function renderUserCourses(courses, isStale = false) {
       const courseId = card.dataset.courseId;
       const course = courses.find(c => c.id === courseId);
       if (course) {
-        showCourseDetail(course);
+        showCourseDetail(course, true);
       }
     });
     
@@ -647,7 +647,7 @@ function renderUserCourses(courses, isStale = false) {
 }
 
 // Function to show course detail view
-function showCourseDetail(course) {
+function showCourseDetail(course, save=true) {
   const pathwaysList = document.getElementById('pathwaysList');
   const courseDetailView = document.getElementById('courseDetailView');
   const courseDetailContent = document.getElementById('courseDetailContent');
@@ -655,8 +655,10 @@ function showCourseDetail(course) {
   if (!courseDetailView || !courseDetailContent) return;
   
   // Save current scroll position before switching views
-  saveScrollPosition();
-  
+  if (save) {
+    saveScrollPosition();
+  }
+
   // Hide pathways list and show detail view
   if (pathwaysList) pathwaysList.style.display = 'none';
   courseDetailView.style.display = 'block';
@@ -671,7 +673,7 @@ function showCourseDetail(course) {
   console.log('*** VIEW CHANGED TO courseDetail for course:', course.id);
   
   // Only reset scroll position if this is a genuine different course (not during initial restore)
-  if (previousCourseId && previousCourseId !== course.id) {
+  if (!previousCourseId || (previousCourseId && previousCourseId !== course.id)) {
     console.log('🔄 Opening different course, resetting scroll position. Previous:', previousCourseId, 'New:', course.id);
     currentViewState.scrollPositions.courseDetail = 0;
   } else {
@@ -974,7 +976,7 @@ function restoreScrollPosition() {
     setTimeout(() => {
       console.log(`Actual scroll position after restore:`, scrollableElement.scrollTop);
     }, 100);
-  }, 200);
+  }, 500);
 }
 
 async function restoreViewState() {
@@ -1050,7 +1052,7 @@ async function restoreViewState() {
           if (course) {
             // Small delay to ensure DOM is ready
             setTimeout(() => {
-              showCourseDetail(course);
+              showCourseDetail(course, false);
             }, 200);
           } else {
             // Course not found, switch to pathways list
