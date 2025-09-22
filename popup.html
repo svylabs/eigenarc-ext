@@ -74,6 +74,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-height: 0;
     }
 
     /* Maximize chat screen space */
@@ -82,13 +83,17 @@
       padding: 16px;
     }
 
-    /* Full height for chat containers in tab panels */
-    .tab-panel .chat-container {
-      height: calc(100vh - 140px); /* Subtract header + tab heights */
+    /* Scoped chat container sizing - use flex instead of vh */
+    #chatScreen .chat-container {
+      flex: 1;
+      min-height: 0;
+      height: auto;
     }
 
-    #chatScreen .chat-container {
-      height: calc(100vh - 100px); /* Subtract header height */
+    #createPlanTab .chat-container {
+      flex: 1;
+      min-height: 0;
+      height: auto;
     }
 
     /* Welcome Screen */
@@ -362,6 +367,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      min-height: 0;
     }
 
     /* Plan Display */
