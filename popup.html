@@ -88,6 +88,11 @@
       overflow-y: auto;
     }
 
+    /* Prevent nested scrolling in Create Plan tab */
+    #createPlanTab .tab-content {
+      overflow: hidden;
+    }
+
     /* Scoped chat container sizing - use flex instead of vh */
     #chatScreen .chat-container {
       flex: 1;
@@ -280,29 +285,28 @@
     }
 
     .new-conversation-btn {
-      background: transparent;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.95);
       color: #666;
       border: 1px solid #e1e5e9;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 11px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
-      margin-bottom: 12px;
-      align-self: flex-end;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .new-conversation-btn:hover {
-      background: #f8f9fa;
+      background: rgba(248, 249, 250, 0.98);
       border-color: hsl(142, 35%, 42%);
       color: hsl(142, 35%, 42%);
-    }
-
-    .chat-header {
-      display: flex;
-      justify-content: flex-end;
-      padding: 0 0 8px 0;
+      transform: translateY(-1px);
     }
 
     /* Signin Screen */
@@ -395,7 +399,7 @@
     .tab-content {
       flex: 1;
       padding: 16px;
-      overflow-y: auto;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -635,12 +639,10 @@
       </div>
     </div>
     <div class="screen-content">
-      <div class="chat-container">
-        <div class="chat-header">
-          <button class="new-conversation-btn" id="newConversationBtn">
-            ✨ New Conversation
-          </button>
-        </div>
+      <div class="chat-container" style="position: relative;">
+        <button class="new-conversation-btn" id="newConversationBtn">
+          ✨ New
+        </button>
         <div class="chat-messages" id="chatMessages">
           <div class="message ai">
             👋 Welcome to Eigenarc! I'm your AI Learning assistant. I'll help you create personalized learning materials and step-by-step pathways for any goal - whether you want to master new skills, launch a venture, change careers, or achieve personal milestones.
@@ -875,12 +877,10 @@
 
       <!-- Create Plan Tab -->
       <div id="createPlanTab" class="tab-panel hidden">
-        <div id="createPlanSignedIn" class="chat-container">
-          <div class="chat-header">
-            <button class="new-conversation-btn" id="newCreatePlanConversationBtn">
-              ✨ New Conversation
-            </button>
-          </div>
+        <div id="createPlanSignedIn" class="chat-container" style="position: relative;">
+          <button class="new-conversation-btn" id="newCreatePlanConversationBtn">
+            ✨ New
+          </button>
           <div class="chat-messages" id="createPlanMessages">
             <div class="message ai">
               Let's create a new learning plan! What would you like to learn next?
