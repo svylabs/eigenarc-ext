@@ -993,13 +993,23 @@ async function restoreViewState() {
       // Preserve the saved scroll positions completely
       const savedScrollPositions = result.currentViewState.scrollPositions || {};
       console.log('🔧 Saved scroll positions to preserve:', savedScrollPositions);
+      console.log('🔧 courseDetail saved value:', savedScrollPositions.courseDetail);
+      console.log('🔧 courseDetail is truthy?', !!savedScrollPositions.courseDetail);
+      console.log('🔧 courseDetail type:', typeof savedScrollPositions.courseDetail);
+      
+      // Explicit assignment to avoid falsy issues
+      const preservedCourseDetail = savedScrollPositions.courseDetail !== undefined ? savedScrollPositions.courseDetail : 0;
+      const preservedPathwaysList = savedScrollPositions.pathwaysList !== undefined ? savedScrollPositions.pathwaysList : 0;
+      
+      console.log('🔧 Preserved courseDetail:', preservedCourseDetail);
+      console.log('🔧 Preserved pathwaysList:', preservedPathwaysList);
       
       currentViewState = {
         ...currentViewState,
         ...result.currentViewState,
         scrollPositions: {
-          pathwaysList: savedScrollPositions.pathwaysList || 0,
-          courseDetail: savedScrollPositions.courseDetail || 0
+          pathwaysList: preservedPathwaysList,
+          courseDetail: preservedCourseDetail
         }
       };
       
