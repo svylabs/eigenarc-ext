@@ -228,7 +228,16 @@ async function signInWithFirebase() {
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error('Firebase load timeout'));
-        }, 10000);
+        }, 5000);
+        
+        const checkFirebase = () => {
+          if (window.firebaseAuth) {
+            clearTimeout(timeout);
+            resolve();
+          } else {
+            setTimeout(checkFirebase, 100);
+          }
+        };
         
         document.addEventListener('firebaseReady', () => {
           clearTimeout(timeout);
@@ -236,9 +245,11 @@ async function signInWithFirebase() {
         }, { once: true });
         
         // Check if already loaded
-        if (window.firebaseReady) {
+        if (window.firebaseReady || window.firebaseAuth) {
           clearTimeout(timeout);
           resolve();
+        } else {
+          checkFirebase();
         }
       });
     }
