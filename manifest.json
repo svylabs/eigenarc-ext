@@ -30,12 +30,13 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://www.gstatic.com; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "permissions": [
     "tabs", 
     "storage",
-    "identity"
+    "identity",
+    "offscreen"
   ],
   "oauth2": {
     "client_id": "525622998725-l4kl6l3dd2252bqq6p56omtmtjr5tupl.apps.googleusercontent.com",

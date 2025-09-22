@@ -1,80 +1,64 @@
-// Firebase authentication for Chrome extension - proper approach
+// Firebase Authentication for Chrome Extensions - Using offscreen document approach
 console.log('Firebase auth loading...');
 
-// Initialize Firebase with proper configuration
-const initFirebase = async () => {
-  // Import Firebase modules (these work in Chrome extensions)
-  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-  const { getAuth, GoogleAuthProvider, signInWithCredential } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-  
-  const firebaseConfig = {
-    apiKey: "AIzaSyAkXsTa7_j8ZlLe8rBY7gUdvR7s3z1P2vE",
-    authDomain: "eigenarc-ai.firebaseapp.com", 
-    projectId: "eigenarc-ai",
-    storageBucket: "eigenarc-ai.firebasestorage.app",
-    appId: "1:123456789:web:abcdef1234567890"
-  };
-  
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  
-  return { auth, GoogleAuthProvider, signInWithCredential };
-};
+// Create and manage offscreen document for Firebase auth
+async function setupOffscreenDocument() {
+  const offscreenUrl = chrome.runtime.getURL('offscreen.html');
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [offscreenUrl]
+  });
+
+  if (existingContexts.length > 0) {
+    return;
+  }
+
+  // Create offscreen document
+  await chrome.offscreen.createDocument({
+    url: 'offscreen.html',
+    reasons: ['DOM_SCRAPING'],
+    justification: 'Firebase Authentication'
+  });
+}
 
 // Export auth functions for use in popup.js
 window.firebaseAuth = {
   signInWithGoogle: async () => {
     try {
-      // Step 1: Get Google OAuth token via Chrome Identity API
-      const accessToken = await chrome.identity.getAuthToken({
-        interactive: true,
-        scopes: ['openid', 'email', 'profile']
+      // Setup offscreen document
+      await setupOffscreenDocument();
+      
+      // Send authentication request to offscreen document
+      const response = await new Promise((resolve, reject) => {
+        const messageId = Date.now().toString();
+        
+        const messageListener = (message, sender, sendResponse) => {
+          if (message.type === 'FIREBASE_AUTH_RESPONSE' && message.messageId === messageId) {
+            chrome.runtime.onMessage.removeListener(messageListener);
+            resolve(message.data);
+          }
+        };
+        
+        chrome.runtime.onMessage.addListener(messageListener);
+        
+        // Send request to offscreen document
+        chrome.runtime.sendMessage({
+          type: 'FIREBASE_AUTH_REQUEST',
+          messageId: messageId
+        });
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+          chrome.runtime.onMessage.removeListener(messageListener);
+          reject(new Error('Authentication timeout'));
+        }, 30000);
       });
       
-      if (!accessToken) {
-        throw new Error('Failed to get Google access token');
+      if (response.success) {
+        return response;
+      } else {
+        throw new Error(response.error);
       }
-      
-      // Step 2: Initialize Firebase and sign in with credential
-      const { auth, GoogleAuthProvider, signInWithCredential } = await initFirebase();
-      
-      // Create Google credential for Firebase
-      const credential = GoogleAuthProvider.credential(null, accessToken);
-      
-      // Sign in to Firebase with the Google credential
-      const userCredential = await signInWithCredential(auth, credential);
-      const user = userCredential.user;
-      
-      // Step 3: Get Firebase ID token
-      const firebaseToken = await user.getIdToken();
-      
-      // Step 4: Send Firebase token to your API
-      const response = await fetch('https://eigenarc.com/api/auth/firebase', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseToken: firebaseToken
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API authentication failed: ${response.status}`);
-      }
-      
-      const userData = await response.json();
-      
-      return {
-        success: true,
-        user: userData.user,
-        firebaseUser: {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL
-        }
-      };
       
     } catch (error) {
       console.error('Firebase authentication error:', error);
