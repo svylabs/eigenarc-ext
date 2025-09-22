@@ -1016,6 +1016,11 @@ async function restoreViewState() {
         console.log('   - scrollPositions:', currentViewState.scrollPositions);
       }
       
+      // DEBUG: Check if scroll positions are being modified
+      console.log('🔍 Pre-final check scroll positions:', currentViewState.scrollPositions);
+      console.log('🔍 courseDetail value specifically:', currentViewState.scrollPositions.courseDetail);
+      console.log('🔍 Object keys:', Object.keys(currentViewState.scrollPositions));
+      
       console.log('📍 Final scroll positions:', currentViewState.scrollPositions);
       console.log('🎯 Restored view:', currentViewState.view);
       console.log('📚 Restored course ID:', currentViewState.courseId);
