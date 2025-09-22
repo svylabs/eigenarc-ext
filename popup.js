@@ -819,7 +819,7 @@ function showCourseDetail(course) {
   // Restore scroll position after content is loaded
   setTimeout(() => {
     restoreScrollPosition();
-  }, 300);
+  }, 400);
 }
 
 // Function to go back to pathways list
@@ -894,23 +894,19 @@ function saveViewState() {
 }
 
 function getScrollableElement() {
-  // For Chrome extension popups, find the actual scrollable container
-  const popup = document.body;
-  const homeScreen = document.getElementById('homeScreen');
+  // The main scrollable container in the popup is .tab-content
   const tabContent = document.querySelector('.tab-content');
+  if (tabContent) {
+    console.log('Using tab-content as scrollable element, scrollHeight:', tabContent.scrollHeight, 'clientHeight:', tabContent.clientHeight);
+    return tabContent;
+  }
   
-  // Check which element actually has overflow and scroll
+  // Fallback to other containers
+  const homeScreen = document.getElementById('homeScreen');
   if (homeScreen && homeScreen.scrollHeight > homeScreen.clientHeight) {
     return homeScreen;
   }
-  if (tabContent && tabContent.scrollHeight > tabContent.clientHeight) {
-    return tabContent;
-  }
-  if (popup && popup.scrollHeight > popup.clientHeight) {
-    return popup;
-  }
   
-  // Fallback to document element
   return document.documentElement || document.body;
 }
 
@@ -931,9 +927,14 @@ function restoreScrollPosition() {
     const currentView = currentViewState.view;
     const scrollPosition = currentViewState.scrollPositions[currentView] || 0;
     
+    console.log(`Restoring scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
     scrollableElement.scrollTop = scrollPosition;
-    console.log(`Restored scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
-  }, 50);
+    
+    // Verify the scroll was applied
+    setTimeout(() => {
+      console.log(`Actual scroll position after restore:`, scrollableElement.scrollTop);
+    }, 100);
+  }, 200);
 }
 
 async function restoreViewState() {
@@ -1570,11 +1571,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     
-    // Add scroll tracking to potential scrollable containers
+    // Primary scroll tracking on the main scrollable container (.tab-content)
+    const tabContent = document.querySelector('.tab-content');
+    if (tabContent) {
+      console.log('Adding scroll tracking to tab-content');
+      addScrollTracking(tabContent);
+    }
+    
+    // Add scroll tracking to other potential containers as backup
     addScrollTracking(document.body);
     addScrollTracking(document.documentElement);
     addScrollTracking(document.getElementById('homeScreen'));
-    addScrollTracking(document.querySelector('.tab-content'));
     
     // Also add a universal scroll listener
     document.addEventListener('scroll', (e) => {
