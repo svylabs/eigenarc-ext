@@ -979,8 +979,13 @@ function restoreScrollPosition() {
 
 async function restoreViewState() {
   try {
+    console.log('💾 Loading persisted state from storage...');
     const result = await chrome.storage.local.get(['currentViewState']);
+    
     if (result.currentViewState) {
+      console.log('📥 Raw persisted state loaded:', result.currentViewState);
+      console.log('📍 Raw scroll positions:', result.currentViewState.scrollPositions);
+      
       // Merge with current state to ensure we have the scrollPositions structure
       currentViewState = {
         ...currentViewState,
@@ -991,6 +996,11 @@ async function restoreViewState() {
           ...result.currentViewState.scrollPositions
         }
       };
+      
+      console.log('✅ Merged view state:', currentViewState);
+      console.log('📍 Final scroll positions:', currentViewState.scrollPositions);
+      console.log('🎯 Restored view:', currentViewState.view);
+      console.log('📚 Restored course ID:', currentViewState.courseId);
       
       // If we were in course detail view, restore it
       if (currentViewState.view === 'courseDetail' && currentViewState.courseId && currentUser) {
@@ -1470,7 +1480,12 @@ function showNotification(message) {
 
 // Initialize extension
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Extension loaded');
+  console.log('🚀 === POPUP OPENED ===');
+  console.log('📊 Current view state at startup:', currentViewState);
+  console.log('📍 Scroll positions at startup:', currentViewState.scrollPositions);
+  console.log('🎯 Current view:', currentViewState.view);
+  console.log('📚 Current course ID:', currentViewState.courseId);
+  console.log('========================');
   
   // Attach event listeners
   document.getElementById('beginLearningBtn').addEventListener('click', () => {
