@@ -85,7 +85,7 @@
 
     /* Allow scrolling in home screen tab content */
     #homeScreen .tab-content {
-      overflow: visible;
+      overflow-y: auto;
     }
 
     /* Scoped chat container sizing - use flex instead of vh */
@@ -369,10 +369,11 @@
     .tab-content {
       flex: 1;
       padding: 16px;
-      overflow: visible;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       min-height: 0;
+      max-height: 100%;
     }
 
     /* Plan Display */
@@ -448,12 +449,10 @@
     }
 
     .tab-panel {
-      flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
-      overflow-y: auto;
-      max-height: 100%;
+      overflow: visible;
     }
 
     .hidden {
