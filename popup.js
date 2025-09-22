@@ -777,9 +777,12 @@ function showCourseDetail(course, save=true) {
                           cursor: pointer;
                           transition: all 0.2s ease;
                         " 
-                        onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#007bff'" 
-                        onmouseout="this.style.background='${isCompleted ? '#f8f9fa' : '#fff'}'; this.style.borderColor='${isCompleted ? '#28a745' : '#e9ecef'}'" 
-                        onclick="injectTaskPrompt('${course.title.replace(/'/g, "\\'").replace(/"/g, '\\"')}', '${course.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'No description available'}', '${phase.title?.replace(/'/g, "\\'").replace(/"/g, '\\"') || `Phase ${phaseIndex + 1}`}', '${phase.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || ''}', '${task.replace(/'/g, "\\'").replace(/"/g, '\\"')}', '${phase.duration || ''}')">
+                        data-course-title="${course.title.replace(/"/g, '&quot;')}" 
+                        data-course-description="${course.description?.replace(/"/g, '&quot;') || 'No description available'}" 
+                        data-phase-title="${phase.title?.replace(/"/g, '&quot;') || `Phase ${phaseIndex + 1}`}" 
+                        data-phase-description="${phase.description?.replace(/"/g, '&quot;') || ''}" 
+                        data-task-title="${task.replace(/"/g, '&quot;')}" 
+                        data-phase-duration="${phase.duration || ''}">
                           <span style="
                             width: 16px; 
                             height: 16px; 
@@ -835,6 +838,37 @@ function showCourseDetail(course, save=true) {
     ${phasesHtml}
   `;
   
+  // Add event listeners for clickable tasks
+  const clickableTasks = document.querySelectorAll('.clickable-task');
+  clickableTasks.forEach(taskElement => {
+    // Add click handler
+    taskElement.addEventListener('click', () => {
+      const courseTitle = taskElement.dataset.courseTitle;
+      const courseDescription = taskElement.dataset.courseDescription;
+      const phaseTitle = taskElement.dataset.phaseTitle;
+      const phaseDescription = taskElement.dataset.phaseDescription;
+      const taskTitle = taskElement.dataset.taskTitle;
+      const phaseDuration = taskElement.dataset.phaseDuration;
+      
+      console.log('🎯 Task clicked:', taskTitle);
+      injectTaskPrompt(courseTitle, courseDescription, phaseTitle, phaseDescription, taskTitle, phaseDuration);
+    });
+    
+    // Add hover effects
+    const originalBg = taskElement.style.background;
+    const originalBorder = taskElement.style.borderColor;
+    
+    taskElement.addEventListener('mouseenter', () => {
+      taskElement.style.background = '#f8f9fa';
+      taskElement.style.borderColor = '#007bff';
+    });
+    
+    taskElement.addEventListener('mouseleave', () => {
+      taskElement.style.background = originalBg;
+      taskElement.style.borderColor = originalBorder;
+    });
+  });
+
   // Restore scroll position when navigating to course details
   setTimeout(() => {
     const scrollableElement = getScrollableElement();
