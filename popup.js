@@ -7,7 +7,10 @@ let currentScreen = 'welcomeScreen';
 let currentViewState = {
   view: 'pathwaysList', // 'pathwaysList' or 'courseDetail'
   courseId: null,
-  scrollPosition: 0
+  scrollPositions: {
+    pathwaysList: 0,
+    courseDetail: 0
+  }
 };
 let currentTab = 'currentPlan';
 
@@ -659,11 +662,10 @@ function showCourseDetail(course) {
   courseDetailView.style.display = 'block';
   
   // Update view state
-  currentViewState = {
-    view: 'courseDetail',
-    courseId: course.id,
-    scrollPosition: 0
-  };
+  currentViewState.view = 'courseDetail';
+  currentViewState.courseId = course.id;
+  // Reset scroll position for course detail view
+  currentViewState.scrollPositions.courseDetail = 0;
   
   // Save state to storage
   saveViewState();
@@ -817,7 +819,7 @@ function showCourseDetail(course) {
   // Restore scroll position after content is loaded
   setTimeout(() => {
     restoreScrollPosition();
-  }, 100);
+  }, 300);
 }
 
 // Function to go back to pathways list
@@ -832,11 +834,9 @@ function backToPathways() {
   if (pathwaysList) pathwaysList.style.display = 'block';
   
   // Update view state
-  currentViewState = {
-    view: 'pathwaysList',
-    courseId: null,
-    scrollPosition: 0
-  };
+  currentViewState.view = 'pathwaysList';
+  currentViewState.courseId = null;
+  // Keep existing scroll positions - don't reset pathways list position
   
   // Save state and restore scroll position
   saveViewState();
@@ -864,7 +864,7 @@ async function refreshPathways() {
     
     // Force refresh by clearing cache and fetching fresh data
     if (currentUser) {
-      clearUserCoursesCache(currentUser.uid || currentUser.email);
+      clearCoursesCache();
       await fetchUserCourses();
       
       // Refresh the pathways view
@@ -893,16 +893,46 @@ function saveViewState() {
   });
 }
 
+function getScrollableElement() {
+  // For Chrome extension popups, find the actual scrollable container
+  const popup = document.body;
+  const homeScreen = document.getElementById('homeScreen');
+  const tabContent = document.querySelector('.tab-content');
+  
+  // Check which element actually has overflow and scroll
+  if (homeScreen && homeScreen.scrollHeight > homeScreen.clientHeight) {
+    return homeScreen;
+  }
+  if (tabContent && tabContent.scrollHeight > tabContent.clientHeight) {
+    return tabContent;
+  }
+  if (popup && popup.scrollHeight > popup.clientHeight) {
+    return popup;
+  }
+  
+  // Fallback to document element
+  return document.documentElement || document.body;
+}
+
 function saveScrollPosition() {
-  const scrollableElement = document.documentElement || document.body;
-  currentViewState.scrollPosition = scrollableElement.scrollTop;
+  const scrollableElement = getScrollableElement();
+  const currentView = currentViewState.view;
+  const scrollPosition = scrollableElement.scrollTop;
+  
+  // Save scroll position for the current view
+  currentViewState.scrollPositions[currentView] = scrollPosition;
+  console.log(`Saved scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
   saveViewState();
 }
 
 function restoreScrollPosition() {
   setTimeout(() => {
-    const scrollableElement = document.documentElement || document.body;
-    scrollableElement.scrollTop = currentViewState.scrollPosition || 0;
+    const scrollableElement = getScrollableElement();
+    const currentView = currentViewState.view;
+    const scrollPosition = currentViewState.scrollPositions[currentView] || 0;
+    
+    scrollableElement.scrollTop = scrollPosition;
+    console.log(`Restored scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
   }, 50);
 }
 
@@ -910,7 +940,16 @@ async function restoreViewState() {
   try {
     const result = await chrome.storage.local.get(['currentViewState']);
     if (result.currentViewState) {
-      currentViewState = result.currentViewState;
+      // Merge with current state to ensure we have the scrollPositions structure
+      currentViewState = {
+        ...currentViewState,
+        ...result.currentViewState,
+        scrollPositions: {
+          pathwaysList: 0,
+          courseDetail: 0,
+          ...result.currentViewState.scrollPositions
+        }
+      };
       
       // If we were in course detail view, restore it
       if (currentViewState.view === 'courseDetail' && currentViewState.courseId && currentUser) {
@@ -923,10 +962,16 @@ async function restoreViewState() {
             setTimeout(() => {
               showCourseDetail(course);
             }, 200);
+          } else {
+            // Course not found, switch to pathways list
+            currentViewState.view = 'pathwaysList';
+            currentViewState.courseId = null;
+            restoreScrollPosition();
           }
         }
       } else {
         // Restore scroll position for pathways list
+        currentViewState.view = 'pathwaysList';
         restoreScrollPosition();
       }
     }
@@ -1514,12 +1559,28 @@ document.addEventListener('DOMContentLoaded', () => {
       saveScrollPosition();
     };
     
-    // Track scroll position periodically (throttled)
+    // Track scroll position on multiple potential scroll containers
     let scrollTimeout;
-    document.addEventListener('scroll', () => {
+    const addScrollTracking = (element) => {
+      if (element) {
+        element.addEventListener('scroll', () => {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(trackScrollPosition, 250);
+        });
+      }
+    };
+    
+    // Add scroll tracking to potential scrollable containers
+    addScrollTracking(document.body);
+    addScrollTracking(document.documentElement);
+    addScrollTracking(document.getElementById('homeScreen'));
+    addScrollTracking(document.querySelector('.tab-content'));
+    
+    // Also add a universal scroll listener
+    document.addEventListener('scroll', (e) => {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(trackScrollPosition, 250);
-    });
+    }, true); // Use capture to catch all scroll events
     
     // Save position when popup is about to close
     window.addEventListener('beforeunload', saveScrollPosition);
