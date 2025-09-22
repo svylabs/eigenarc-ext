@@ -256,8 +256,15 @@ async function sendChatMessage() {
       
       addMessageToChat('ai', aiContent, 'chatMessages');
       
+      // Check if AI can automatically generate a plan
+      if (result.can_generate_plan && result.plan_parameters) {
+        console.log('🤖 AI can generate plan automatically:', result.plan_parameters);
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'chatMessages');
+        }, 1000);
+      }
       // Check if AI suggests plan generation
-      if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
+      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
         // Show plan generation options in main chat
         showPlanGenerationOptionsInMainChat();
       } else if (aiContent.toLowerCase().includes('create') && aiContent.toLowerCase().includes('plan')) {
@@ -315,8 +322,15 @@ async function sendCreatePlanMessage() {
       
       addMessageToChat('ai', aiContent, 'createPlanMessages');
       
+      // Check if AI can automatically generate a plan
+      if (result.can_generate_plan && result.plan_parameters) {
+        console.log('🤖 AI can generate plan automatically:', result.plan_parameters);
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
+        }, 1000);
+      }
       // Check if AI suggests plan generation or if content indicates readiness to create a plan
-      if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
+      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
         // Show plan generation options
         showPlanGenerationOptions();
       } else if (aiContent.toLowerCase().includes('create') && aiContent.toLowerCase().includes('plan')) {
@@ -354,6 +368,45 @@ function addMessageToChat(sender, message, containerId) {
   
   container.appendChild(messageDiv);
   container.scrollTop = container.scrollHeight;
+}
+
+// Automatic Plan Generation Handler
+async function handleAutomaticPlanGeneration(planParameters, containerId) {
+  try {
+    console.log('🚀 Starting automatic plan generation with parameters:', planParameters);
+    
+    // Show loading message
+    addMessageToChat('ai', '⚡ Generating your personalized learning plan...', containerId);
+    
+    // Prepare parameters with defaults
+    const params = {
+      subject: planParameters.subject || 'General learning goal',
+      skillLevel: planParameters.skillLevel || 'beginner', 
+      timeline: planParameters.timeline || '4 weeks',
+      dailyTime: planParameters.dailyTime || '1 hour',
+      goals: planParameters.goals || 'Build understanding and practical skills'
+    };
+    
+    console.log('📋 Plan parameters prepared:', params);
+    
+    // Generate the plan
+    const plan = await generatePlan(params);
+    
+    // Show success message
+    addMessageToChat('ai', '🎉 Perfect! I\'ve created your personalized learning plan based on our conversation:', containerId);
+    
+    // Show the generated plan using the appropriate display function
+    if (containerId === 'chatMessages') {
+      showGeneratedPlanInMainChat(plan);
+    } else {
+      showGeneratedPlan(plan);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error in automatic plan generation:', error);
+    const errorMessage = 'Sorry, I encountered an error while generating your plan. Please try again or use the manual plan creation option.';
+    addMessageToChat('ai', errorMessage, containerId);
+  }
 }
 
 // Plan Generation UI Functions
@@ -511,7 +564,7 @@ function showGeneratedPlan(plan) {
     
     <div style="display: flex; gap: 12px;">
       <button id="enrollInPlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
-        🚀 Enroll in This Plan
+        🚀 Start Learning with this Plan
       </button>
       <button id="viewPlanDetailsBtn" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
         View Details
@@ -531,7 +584,7 @@ async function handlePlanEnrollment(planId) {
   const enrollBtn = document.getElementById('enrollInPlanBtn');
   const originalText = enrollBtn.textContent;
   enrollBtn.disabled = true;
-  enrollBtn.textContent = 'Enrolling...';
+  enrollBtn.textContent = 'Starting...';
   
   try {
     await enrollInPlan(planId);
@@ -742,7 +795,7 @@ function showGeneratedPlanInMainChat(plan) {
     
     <div style="display: flex; gap: 12px;">
       <button id="mainEnrollInPlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
-        🚀 Enroll in This Plan
+        🚀 Start Learning with this Plan
       </button>
       <button id="mainViewPlanDetailsBtn" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
         View Details
@@ -762,7 +815,7 @@ async function handleMainChatPlanEnrollment(planId) {
   const enrollBtn = document.getElementById('mainEnrollInPlanBtn');
   const originalText = enrollBtn.textContent;
   enrollBtn.disabled = true;
-  enrollBtn.textContent = 'Enrolling...';
+  enrollBtn.textContent = 'Starting...';
   
   try {
     await enrollInPlan(planId);
