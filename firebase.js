@@ -201,5 +201,6 @@ window.firebaseAuth = {
 };
 
 // Notify popup.js that Firebase is ready
+console.log('Firebase REST API ready');
 window.firebaseReady = true;
 document.dispatchEvent(new Event('firebaseReady'));
