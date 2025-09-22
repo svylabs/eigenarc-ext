@@ -420,20 +420,28 @@ async function updateMyPathwaysView() {
 
 function updateTabVisibility() {
   const examplesTabBtn = document.getElementById('examplesTabBtn');
+  const settingsDropdown = document.getElementById('settingsDropdown');
   
   if (currentUser) {
-    // Signed in: hide Examples tab
+    // Signed in: hide Examples tab and show settings dropdown
     if (examplesTabBtn) {
       examplesTabBtn.style.display = 'none';
+    }
+    if (settingsDropdown) {
+      settingsDropdown.style.display = 'block';
+      updateProfileInfo();
     }
     // If current tab is examples, switch to My Pathways
     if (currentTab === 'examples') {
       currentTab = 'currentPlan';
     }
   } else {
-    // Not signed in: show Examples tab
+    // Not signed in: show Examples tab and hide settings dropdown
     if (examplesTabBtn) {
       examplesTabBtn.style.display = 'block';
+    }
+    if (settingsDropdown) {
+      settingsDropdown.style.display = 'none';
     }
     // Default to examples tab for non-signed in users
     if (currentTab !== 'examples') {
@@ -543,46 +551,62 @@ async function fetchUserCourses(testToken = null) {
 
 function renderUserCourses(courses, isStale = false) {
   const container = document.getElementById('coursesContainer');
+  const countEl = document.getElementById('pathwaysCount');
+  
   if (!container) return;
   
-  // Add offline/stale data indicator
+  // Update header with course count
+  if (countEl) {
+    const countText = isStale ? 
+      `Showing ${courses.length} pathways (offline mode)` : 
+      `Showing ${courses.length} pathways`;
+    countEl.textContent = countText;
+  }
+  
+  // Add offline/stale data indicator (smaller version)
   const statusIndicator = isStale ? 
-    '<div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 14px; color: #856404;">📱 Showing cached courses (offline mode)</div>' : '';
+    '<div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 8px; margin-bottom: 12px; font-size: 12px; color: #856404; text-align: center;">📱 Offline Mode</div>' : '';
   
   const coursesHtml = courses.map(course => {
     const completionStatus = course.isCompleted ? 
-      '<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">✓ Completed</span>' :
-      '<span style="background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">In Progress</span>';
+      '<span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">✓ Completed</span>' :
+      '<span style="background: #007bff; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">In Progress</span>';
       
     const enrolledDate = new Date(course.enrolledAt).toLocaleDateString();
-    const completedDate = course.completedAt ? new Date(course.completedAt).toLocaleDateString() : null;
+    
+    // Fix phases count - ensure it's just the array length
+    const phasesCount = course.phases && Array.isArray(course.phases) ? course.phases.length : 0;
+    
+    // Truncate description to 2 lines (approximately 120 characters)
+    const description = course.description || '';
+    const truncatedDescription = description.length > 120 ? 
+      description.substring(0, 117) + '...' : description;
     
     return `
       <div class="course-card" data-course-id="${course.id}" style="
         border: 1px solid #e1e5e9; 
-        border-radius: 8px; 
-        padding: 20px; 
-        margin-bottom: 16px; 
+        border-radius: 6px; 
+        padding: 12px; 
+        margin-bottom: 10px; 
         background: white; 
         cursor: pointer; 
         transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
       ">
-        <div class="course-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${course.title}</h4>
+        <div class="course-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 15px; font-weight: 600; line-height: 1.3; flex: 1; margin-right: 12px;">${course.title}</h4>
           ${completionStatus}
         </div>
-        <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.4;">${course.description}</p>
-        <div class="course-meta" style="margin-bottom: 16px;">
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">Duration: ${course.duration}</span>
-            <span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">Level: ${course.skillLevel}</span>
-            ${course.phases ? `<span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${course.phases.length} phases</span>` : ''}
+        ${truncatedDescription ? `<p style="margin: 0 0 10px 0; color: #666; font-size: 13px; line-height: 1.4;">${truncatedDescription}</p>` : ''}
+        <div class="course-meta" style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${course.duration ? `<span style="background: #f8f9fa; color: #666; padding: 2px 6px; border-radius: 8px; font-size: 11px;">${course.duration}</span>` : ''}
+            ${course.skillLevel ? `<span style="background: #f8f9fa; color: #666; padding: 2px 6px; border-radius: 8px; font-size: 11px;">${course.skillLevel}</span>` : ''}
+            ${phasesCount > 0 ? `<span style="background: #f8f9fa; color: #666; padding: 2px 6px; border-radius: 8px; font-size: 11px;">${phasesCount} phases</span>` : ''}
           </div>
-        </div>
-        <div class="course-dates" style="color: #888; font-size: 12px; display: flex; justify-content: space-between;">
-          <span>Enrolled: ${enrolledDate}</span>
-          ${completedDate ? `<span>Completed: ${completedDate}</span>` : '<span>Continue learning →</span>'}
+          <div style="color: #888; font-size: 11px; text-align: right;">
+            <div>Enrolled: ${enrolledDate}</div>
+          </div>
         </div>
       </div>
     `;
@@ -603,13 +627,13 @@ function renderUserCourses(courses, isStale = false) {
     
     // Add hover effects
     card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-2px)';
-      card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+      card.style.transform = 'translateY(-1px)';
+      card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
     });
     
     card.addEventListener('mouseleave', () => {
       card.style.transform = 'translateY(0)';
-      card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      card.style.boxShadow = '0 1px 2px rgba(0,0,0,0.08)';
     });
   });
 }
@@ -728,6 +752,49 @@ window.ensureValidToken = async function() {
     throw error;
   }
 };
+
+// Function to update profile information in the settings dropdown
+function updateProfileInfo() {
+  if (!currentUser) return;
+  
+  const profileName = currentUser.displayName || currentUser.email || 'User';
+  const profileEmail = currentUser.email || '';
+  const initials = getInitials(profileName);
+  
+  // Update small profile elements
+  const profileNameEl = document.getElementById('profileName');
+  const profileAvatarEl = document.getElementById('profileAvatar');
+  
+  if (profileNameEl) profileNameEl.textContent = profileName;
+  if (profileAvatarEl) profileAvatarEl.textContent = initials;
+  
+  // Update dropdown profile elements
+  const dropdownProfileNameEl = document.getElementById('dropdownProfileName');
+  const dropdownProfileEmailEl = document.getElementById('dropdownProfileEmail');
+  const profileAvatarLargeEl = document.getElementById('profileAvatarLarge');
+  
+  if (dropdownProfileNameEl) dropdownProfileNameEl.textContent = profileName;
+  if (dropdownProfileEmailEl) dropdownProfileEmailEl.textContent = profileEmail;
+  if (profileAvatarLargeEl) profileAvatarLargeEl.textContent = initials;
+}
+
+// Helper function to get user initials
+function getInitials(name) {
+  if (!name) return 'U';
+  
+  // If it's an email, use the first letter of the email username
+  if (name.includes('@')) {
+    return name.charAt(0).toUpperCase();
+  }
+  
+  // For display names, get initials from first and last name
+  const nameParts = name.trim().split(' ');
+  if (nameParts.length >= 2) {
+    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+  }
+  
+  return nameParts[0].charAt(0).toUpperCase();
+}
 
 
 // Make function globally available
@@ -1114,18 +1181,55 @@ document.addEventListener('DOMContentLoaded', () => {
       createPlanSigninBtn.addEventListener('click', signInWithFirebase);
     }
     
-    // Sign out button event listener
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', async (e) => {
+    // Settings dropdown event listeners
+    const settingsBtn = document.getElementById('settingsBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const signOutMenuItem = document.getElementById('signOutMenuItem');
+    
+    if (settingsBtn && dropdownMenu) {
+      // Toggle dropdown when settings button is clicked
+      settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = dropdownMenu.style.display === 'block';
+        dropdownMenu.style.display = isVisible ? 'none' : 'block';
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.style.display = 'none';
+        }
+      });
+      
+      // Add hover effects to settings button
+      settingsBtn.addEventListener('mouseenter', () => {
+        settingsBtn.style.backgroundColor = '#f8f9fa';
+      });
+      
+      settingsBtn.addEventListener('mouseleave', () => {
+        settingsBtn.style.backgroundColor = 'transparent';
+      });
+    }
+    
+    // Sign out menu item event listener
+    if (signOutMenuItem) {
+      signOutMenuItem.addEventListener('click', async (e) => {
         e.preventDefault();
         const success = await window.signOutUser();
         if (success) {
-          // UI will be updated automatically in signOutUser function
-          console.log('User signed out from UI');
+          console.log('User signed out from settings dropdown');
         } else {
           alert('Sign out failed. Please try again.');
         }
+      });
+      
+      // Add hover effects to dropdown item
+      signOutMenuItem.addEventListener('mouseenter', () => {
+        signOutMenuItem.style.backgroundColor = '#f8f9fa';
+      });
+      
+      signOutMenuItem.addEventListener('mouseleave', () => {
+        signOutMenuItem.style.backgroundColor = 'transparent';
       });
     }
 
