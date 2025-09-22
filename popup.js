@@ -10,40 +10,128 @@ let currentTab = 'currentPlan';
 const samplePlans = {
   fullstack: {
     title: "Full-Stack Web Development",
-    description: "A comprehensive 12-week program covering HTML, CSS, JavaScript, React, Node.js, and databases.",
-    tableOfContents: [
-      { title: "HTML Fundamentals", timeline: "Week 1-2", completed: true },
-      { title: "CSS Styling Basics", timeline: "Week 2-3", completed: true },
-      { title: "JavaScript Introduction", timeline: "Week 3-4", completed: false },
-      { title: "DOM Manipulation", timeline: "Week 4-5", completed: false },
-      { title: "React Components", timeline: "Week 5-7", completed: false },
-      { title: "Node.js Backend", timeline: "Week 8-10", completed: false },
-      { title: "Database Integration", timeline: "Week 10-11", completed: false },
-      { title: "Final Project", timeline: "Week 12", completed: false }
+    description: "A comprehensive program covering frontend and backend development technologies.",
+    phases: [
+      {
+        title: "Frontend Fundamentals",
+        lessons: [
+          { title: "HTML Structure and Semantics" },
+          { title: "CSS Styling and Layout" },
+          { title: "JavaScript Basics and ES6" },
+          { title: "DOM Manipulation" }
+        ]
+      },
+      {
+        title: "Frontend Frameworks",
+        lessons: [
+          { title: "React Components and JSX" },
+          { title: "State Management with Hooks" },
+          { title: "React Router and Navigation" },
+          { title: "API Integration" }
+        ]
+      },
+      {
+        title: "Backend Development",
+        lessons: [
+          { title: "Node.js and Express Setup" },
+          { title: "RESTful API Design" },
+          { title: "Authentication and Security" },
+          { title: "Database Integration" }
+        ]
+      },
+      {
+        title: "Full-Stack Integration",
+        lessons: [
+          { title: "Connecting Frontend to Backend" },
+          { title: "Deployment and Hosting" },
+          { title: "Testing and Debugging" },
+          { title: "Final Project" }
+        ]
+      }
     ]
   },
   datascience: {
     title: "Data Science Fundamentals",
-    description: "Learn Python, statistics, data analysis, and machine learning in 10 weeks.",
-    tableOfContents: [
-      { title: "Python Basics", timeline: "Week 1-2", completed: false },
-      { title: "Pandas & Data Analysis", timeline: "Week 3-4", completed: false },
-      { title: "Data Visualization", timeline: "Week 5-6", completed: false },
-      { title: "Statistics & Probability", timeline: "Week 7", completed: false },
-      { title: "Machine Learning Intro", timeline: "Week 8-9", completed: false },
-      { title: "Final Data Project", timeline: "Week 10", completed: false }
+    description: "Learn Python, statistics, data analysis, and machine learning.",
+    phases: [
+      {
+        title: "Python Programming",
+        lessons: [
+          { title: "Python Syntax and Data Types" },
+          { title: "Control Flow and Functions" },
+          { title: "Object-Oriented Programming" },
+          { title: "File Handling and Modules" }
+        ]
+      },
+      {
+        title: "Data Analysis",
+        lessons: [
+          { title: "NumPy for Numerical Computing" },
+          { title: "Pandas for Data Manipulation" },
+          { title: "Data Cleaning Techniques" },
+          { title: "Exploratory Data Analysis" }
+        ]
+      },
+      {
+        title: "Data Visualization",
+        lessons: [
+          { title: "Matplotlib Basics" },
+          { title: "Seaborn for Statistical Plots" },
+          { title: "Interactive Visualizations" },
+          { title: "Dashboard Creation" }
+        ]
+      },
+      {
+        title: "Machine Learning",
+        lessons: [
+          { title: "ML Algorithms Overview" },
+          { title: "Supervised Learning" },
+          { title: "Unsupervised Learning" },
+          { title: "Model Evaluation and Deployment" }
+        ]
+      }
     ]
   },
   mobile: {
     title: "Mobile App Development",
-    description: "Build mobile apps with React Native in 8 weeks.",
-    tableOfContents: [
-      { title: "React Native Setup", timeline: "Week 1", completed: false },
-      { title: "Mobile UI Components", timeline: "Week 2-3", completed: false },
-      { title: "Navigation & Routing", timeline: "Week 4", completed: false },
-      { title: "State Management", timeline: "Week 5-6", completed: false },
-      { title: "API Integration", timeline: "Week 7", completed: false },
-      { title: "App Store Deployment", timeline: "Week 8", completed: false }
+    description: "Build cross-platform mobile apps with React Native.",
+    phases: [
+      {
+        title: "React Native Basics",
+        lessons: [
+          { title: "Development Environment Setup" },
+          { title: "React Native Components" },
+          { title: "Styling and Flexbox" },
+          { title: "State and Props" }
+        ]
+      },
+      {
+        title: "Navigation and UX",
+        lessons: [
+          { title: "Stack Navigation" },
+          { title: "Tab Navigation" },
+          { title: "Drawer Navigation" },
+          { title: "UI/UX Best Practices" }
+        ]
+      },
+      {
+        title: "Advanced Features",
+        lessons: [
+          { title: "API Integration" },
+          { title: "Local Storage" },
+          { title: "Push Notifications" },
+          { title: "Camera and Media" }
+        ]
+      },
+      {
+        title: "Deployment",
+        lessons: [
+          { title: "App Store Guidelines" },
+          { title: "Building for iOS" },
+          { title: "Building for Android" },
+          { title: "App Distribution" }
+        ]
+      }
     ]
   }
 };
@@ -284,14 +372,17 @@ window.renderExamplePathways = function() {
     <div class="guest-plan-card" data-plan="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white;">
       <div class="plan-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${plan.title}</h4>
-        <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.tableOfContents.length} lessons</span>
+        <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.phases.reduce((total, phase) => total + phase.lessons.length, 0)} lessons</span>
       </div>
       <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.4;">${plan.description}</p>
       <div class="pathway-topics" style="margin-bottom: 16px;">
-        ${plan.tableOfContents.slice(0, 3).map(item => 
-          `<span style="display: inline-block; background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; margin-bottom: 4px;">${item.title}</span>`
-        ).join('')}
-        ${plan.tableOfContents.length > 3 ? '<span style="color: #999; font-size: 12px;">+' + (plan.tableOfContents.length - 3) + ' more...</span>' : ''}
+        ${(() => {
+          const allLessons = plan.phases.flatMap(p => p.lessons);
+          return allLessons.slice(0, 3).map(lesson => 
+            `<span style="display: inline-block; background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; margin-bottom: 4px;">${lesson.title}</span>`
+          ).join('') + 
+          (allLessons.length > 3 ? `<span style="color: #999; font-size: 12px;">+${allLessons.length - 3} more lessons...</span>` : '');
+        })()}
       </div>
       <button class="guest-plan-btn" data-plan-key="${key}" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
         View Full Pathway
@@ -321,15 +412,31 @@ window.showPathwayDetails = function(planKey) {
     <div style="padding: 20px; background: white; border-radius: 8px; border: 1px solid #e1e5e9;">
       <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 16px;">${plan.title}</h3>
       <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">${plan.description}</p>
-      <div class="lessons-list">
-        ${plan.tableOfContents.map((lesson, index) => `
-          <div style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px;">
-              ${index + 1}
+      <div class="phases-tree">
+        ${plan.phases.map((phase, phaseIndex) => `
+          <div class="phase-section" style="margin-bottom: 24px;">
+            <div class="phase-header" style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;" data-phase-index="${phaseIndex}">
+              <span class="expand-icon" style="margin-right: 8px; font-size: 12px; transition: transform 0.2s;">▼</span>
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: hsl(142, 35%, 42%); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px;">
+                ${phaseIndex + 1}
+              </div>
+              <div>
+                <div style="font-weight: 600; color: #333; font-size: 15px;">${phase.title}</div>
+                <div style="font-size: 12px; color: #888;">${phase.lessons.length} lessons</div>
+              </div>
             </div>
-            <div style="flex: 1;">
-              <div style="font-weight: 500; color: #333; margin-bottom: 2px;">${lesson.title}</div>
-              <div style="font-size: 12px; color: #888;">${lesson.timeline}</div>
+            <div class="lessons-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
+              ${phase.lessons.map((lesson, lessonIndex) => `
+                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                  <div style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
+                    ${lessonIndex + 1}
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-weight: 500; color: #333; font-size: 14px;">${lesson.title}</div>
+                  </div>
+                  <div style="color: #999; font-size: 12px; margin-left: 8px;">→</div>
+                </div>
+              `).join('')}
             </div>
           </div>
         `).join('')}
@@ -351,6 +458,41 @@ window.showPathwayDetails = function(planKey) {
         renderExamplePathways();
       });
     }
+    
+    // Add collapse/expand functionality for phases
+    container.querySelectorAll('.phase-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const phaseIndex = header.getAttribute('data-phase-index');
+        const lessonsContainer = container.querySelector(`.lessons-container[data-phase-index="${phaseIndex}"]`);
+        const expandIcon = header.querySelector('.expand-icon');
+        
+        const isCollapsed = lessonsContainer.style.display === 'none';
+        lessonsContainer.style.display = isCollapsed ? '' : 'none';
+        expandIcon.textContent = isCollapsed ? '▼' : '▶';
+      });
+    });
+    
+    // Add lesson click functionality using delegated events
+    container.addEventListener('click', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (!lessonItem) return;
+      
+      const clickedPlanKey = lessonItem.getAttribute('data-plan');
+      const phaseIndex = lessonItem.getAttribute('data-phase');
+      const lessonIndex = lessonItem.getAttribute('data-lesson-index');
+      
+      const plan = samplePlans[clickedPlanKey];
+      if (!plan) return;
+      
+      const phase = plan.phases[parseInt(phaseIndex)];
+      const lesson = phase.lessons[parseInt(lessonIndex)];
+      
+      // Generate lesson prompt using the constructPrompt function for consistency
+      const prompt = constructPrompt(plan, { title: lesson.title, timeline: '' });
+      
+      console.log('Generated lesson prompt:', prompt);
+      alert(`Lesson: ${lesson.title}\n\nGenerated prompt: ${prompt}`);
+    });
   }
 }
 
@@ -358,7 +500,7 @@ function constructPrompt(plan, contentItem) {
   return `Learning Plan: ${plan.title}
 Description: ${plan.description}
 Current Topic: ${contentItem.title}
-Timeline: ${contentItem.timeline}
+${contentItem.timeline ? `Timeline: ${contentItem.timeline}` : ''}
 
 Please provide detailed learning materials and guidance for this topic based on the context above.`;
 }
