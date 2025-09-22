@@ -1596,10 +1596,9 @@ function showCourseDetail(course, save=true) {
     
     console.log('🔄 Restoring scroll in showCourseDetails to position:', savedPosition);
     
-    if (savedPosition > 0) {
-      scrollableElement.scrollTop = savedPosition;
-      console.log('✅ Course detail scroll restored');
-    }
+    // Always set the scroll position, even if it's 0, to ensure proper positioning
+    scrollableElement.scrollTop = savedPosition;
+    console.log('✅ Course detail scroll set to:', savedPosition);
   }, 100);
 }
 
