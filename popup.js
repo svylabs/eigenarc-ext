@@ -368,8 +368,10 @@ function switchTab(tabName, element) {
     document.getElementById('createPlanTab').classList.remove('hidden');
     updateCreatePlanView();
   } else if (tabName === 'examples') {
+    console.log('Switching to examples tab...');
     document.getElementById('examplesTab').classList.remove('hidden');
     renderExamplePathways();
+    console.log('Examples tab shown and renderExamplePathways called');
   }
 }
 
@@ -1404,7 +1406,11 @@ function getInitials(name) {
 // Make function globally available
 window.renderExamplePathways = function() {
   const container = document.getElementById('examplePathwaysContainer');
-  if (!container) return;
+  console.log('renderExamplePathways called, container found:', !!container);
+  if (!container) {
+    console.error('examplePathwaysContainer not found in DOM');
+    return;
+  }
   
   const pathwaysHtml = Object.entries(samplePlans).map(([key, plan]) => `
     <div class="guest-plan-card" data-plan-key="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; cursor: pointer; transition: all 0.2s;">
@@ -1427,6 +1433,7 @@ window.renderExamplePathways = function() {
   `).join('');
   
   container.innerHTML = pathwaysHtml;
+  console.log('Examples HTML rendered, pathway count:', Object.keys(samplePlans).length);
   
   // Add event listeners for pathway cards
   container.querySelectorAll('.guest-plan-card').forEach(card => {
@@ -1453,70 +1460,128 @@ window.showPathwayDetails = function(planKey) {
   const plan = samplePlans[planKey];
   if (!plan) return;
   
-  // Hide the examples pathways list and show course detail view
-  const examplePathwaysList = document.getElementById('examplePathways');
-  const courseDetailView = document.getElementById('courseDetailView');
+  const detailsHtml = `
+    <div style="padding: 20px; background: white; border-radius: 8px; border: 1px solid #e1e5e9;">
+      <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 16px;">${plan.title}</h3>
+      <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">${plan.description}</p>
+      <div class="phases-tree">
+        ${plan.phases.map((phase, phaseIndex) => `
+          <div class="phase-section" style="margin-bottom: 24px;">
+            <div class="phase-header" style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;" data-phase-index="${phaseIndex}">
+              <span class="expand-icon" style="margin-right: 8px; font-size: 12px; transition: transform 0.2s;">▼</span>
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: hsl(142, 35%, 42%); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px;">
+                ${phaseIndex + 1}
+              </div>
+              <div>
+                <div style="font-weight: 600; color: #333; font-size: 15px;">${phase.title}</div>
+                <div style="font-size: 12px; color: #888;">${phase.lessons.length} lessons</div>
+              </div>
+            </div>
+            <div class="lessons-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
+              ${phase.lessons.map((lesson, lessonIndex) => {
+                const isCompleted = isLessonCompleted(lesson.id);
+                return `
+                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}">
+                  <div class="lesson-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
+                    ${isCompleted ? '✓' : lessonIndex + 1}
+                  </div>
+                  <div style="flex: 1;">
+                    <div class="lesson-title" style="font-weight: 500; color: #333; font-size: 14px; text-decoration: ${isCompleted ? 'line-through' : 'none'}; opacity: ${isCompleted ? '0.6' : '1'};">${lesson.title}</div>
+                  </div>
+                  <div style="color: #999; font-size: 12px; margin-left: 8px;">→</div>
+                </div>
+              `;
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button id="backToExamplesBtn" style="margin-top: 20px; background: transparent; color: hsl(142, 35%, 42%); border: 1px solid #ddd; padding: 8px 16px; border-radius: 16px; font-size: 13px; cursor: pointer;">
+        ← Back to Examples
+      </button>
+    </div>
+  `;
   
-  if (examplePathwaysList && courseDetailView) {
-    examplePathwaysList.style.display = 'none';
-    courseDetailView.style.display = 'block';
+  const container = document.getElementById('examplePathwaysContainer');
+  if (container) {
+    container.innerHTML = detailsHtml;
     
-    // Update view state
-    currentViewState.view = 'courseDetail';
-    currentViewState.courseId = plan.id;
+    // Add back button event listener
+    const backBtn = container.querySelector('#backToExamplesBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        renderExamplePathways();
+      });
+    }
     
-    // Use the existing showCourseDetails function with the example plan data
-    showCourseDetails(plan);
+    // Add collapse/expand functionality for phases
+    container.querySelectorAll('.phase-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const phaseIndex = header.getAttribute('data-phase-index');
+        const lessonsContainer = container.querySelector(`.lessons-container[data-phase-index="${phaseIndex}"]`);
+        const expandIcon = header.querySelector('.expand-icon');
+        
+        const isCollapsed = lessonsContainer.style.display === 'none';
+        lessonsContainer.style.display = isCollapsed ? '' : 'none';
+        expandIcon.textContent = isCollapsed ? '▼' : '▶';
+      });
+    });
     
-    // Add custom back button for examples after a brief delay
-    setTimeout(() => {
-      const courseDetailContent = document.getElementById('courseDetailContent');
-      if (courseDetailContent) {
-        // Add a back to examples button at the top
-        const backButton = document.createElement('div');
-        backButton.innerHTML = `
-          <button onclick="backToExamples()" style="
-            background: #6c757d; 
-            color: white; 
-            border: none; 
-            padding: 8px 16px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-          ">
-            ← Back to Examples
-          </button>
-        `;
-        courseDetailContent.prepend(backButton);
+    // Add lesson click functionality and hover effects using delegated events
+    container.addEventListener('click', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (!lessonItem) return;
+      
+      const clickedPlanKey = lessonItem.getAttribute('data-plan');
+      const phaseIndex = lessonItem.getAttribute('data-phase');
+      const lessonIndex = lessonItem.getAttribute('data-lesson-index');
+      
+      const plan = samplePlans[clickedPlanKey];
+      if (!plan) return;
+      
+      const phase = plan.phases[parseInt(phaseIndex)];
+      const lesson = phase.lessons[parseInt(lessonIndex)];
+      
+      // Set currentPlan for the selectLesson function
+      currentPlan = plan;
+      
+      // Toggle lesson completion
+      const isCompleted = toggleLessonCompletion(lesson.id);
+      
+      // Update visual state
+      const lessonTitle = lessonItem.querySelector('.lesson-title');
+      const lessonBadge = lessonItem.querySelector('.lesson-badge');
+      
+      if (lessonTitle) {
+        lessonTitle.style.textDecoration = isCompleted ? 'line-through' : 'none';
+        lessonTitle.style.opacity = isCompleted ? '0.6' : '1';
       }
-    }, 100);
+      
+      if (lessonBadge) {
+        lessonBadge.textContent = isCompleted ? '✓' : (parseInt(lessonIndex) + 1);
+      }
+      
+      // Use existing selectLesson function to inject prompt into ChatGPT
+      selectLesson({ title: lesson.title, timeline: '' });
+    });
+    
+    // Add hover effects using delegated events
+    container.addEventListener('mouseenter', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (lessonItem) {
+        lessonItem.style.background = '#f8f9fa';
+      }
+    }, true);
+    
+    container.addEventListener('mouseleave', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (lessonItem) {
+        lessonItem.style.background = 'transparent';
+      }
+    }, true);
   }
 }
 
-// Function to go back to examples list from course detail view
-function backToExamples() {
-  const examplePathways = document.getElementById('examplePathways');
-  const courseDetailView = document.getElementById('courseDetailView');
-  
-  // Save current scroll position before switching views
-  saveScrollPosition();
-  
-  if (courseDetailView) courseDetailView.style.display = 'none';
-  if (examplePathways) examplePathways.style.display = 'block';
-  
-  // Update view state
-  currentViewState.view = 'pathwaysList';
-  currentViewState.courseId = null;
-  console.log('*** VIEW CHANGED TO examplePathways');
-  
-  // Save state and restore scroll position
-  saveViewState();
-  restoreScrollPosition();
-}
 
 
 function constructPrompt(plan, contentItem) {
@@ -1932,9 +1997,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentUser) {
       // Signed in: default to My Pathways, no Examples tab
       currentTab = result.currentTab && result.currentTab !== 'examples' ? result.currentTab : 'currentPlan';
+      console.log('User signed in, currentTab set to:', currentTab);
     } else {
       // Not signed in: default to Examples tab
-      currentTab = result.currentTab || 'examples';
+      currentTab = 'examples'; // Always force to examples for non-authenticated
+      console.log('User not signed in, currentTab forced to examples');
     }
     
     // Restore screen - default to homeScreen if user is logged in, otherwise welcomeScreen
