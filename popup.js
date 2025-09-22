@@ -341,18 +341,66 @@ function updateCreatePlanView() {
   }
 }
 
-function updateMyPathwaysView() {
+async function updateMyPathwaysView() {
   const signinView = document.getElementById('pathwaysSignin');
+  const loadingView = document.getElementById('pathwaysLoading');
+  const pathwaysView = document.getElementById('pathwaysList');
   const emptyView = document.getElementById('pathwaysEmpty');
   
+  // Hide all views initially
+  [signinView, loadingView, pathwaysView, emptyView].forEach(view => {
+    if (view) view.style.display = 'none';
+  });
+  
   if (currentUser) {
-    // User is signed in - show empty pathways message
-    if (signinView) signinView.style.display = 'none';
-    if (emptyView) emptyView.style.display = 'block';
+    // Check if we have cached courses to show immediately
+    const cachedCourses = loadCoursesFromCache();
+    const cacheAge = getCacheAge();
+    const shouldRefresh = !cachedCourses || cacheAge > 5 * 60 * 1000; // Refresh if cache is older than 5 minutes
+    
+    // Show cached courses immediately if available
+    if (cachedCourses && cachedCourses.length > 0) {
+      if (pathwaysView) pathwaysView.style.display = 'block';
+      renderUserCourses(cachedCourses, cacheAge > 60 * 1000); // Show staleness indicator if cache > 1 minute
+    } else {
+      // No cache, show loading
+      if (loadingView) loadingView.style.display = 'block';
+    }
+    
+    // Fetch fresh data if needed
+    if (shouldRefresh) {
+      try {
+        console.log('Refreshing course data...');
+        const courses = await fetchUserCourses();
+        
+        if (loadingView) loadingView.style.display = 'none';
+        
+        if (courses && courses.length > 0) {
+          // Show fresh courses
+          if (pathwaysView) pathwaysView.style.display = 'block';
+          renderUserCourses(courses, false); // Fresh data, no staleness indicator
+        } else {
+          // No courses found
+          if (pathwaysView) pathwaysView.style.display = 'none';
+          if (emptyView) emptyView.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error refreshing courses:', error);
+        if (loadingView) loadingView.style.display = 'none';
+        
+        // If we had cached data, keep showing it
+        if (cachedCourses && cachedCourses.length > 0) {
+          if (pathwaysView) pathwaysView.style.display = 'block';
+          renderUserCourses(cachedCourses, true); // Show with staleness indicator
+        } else {
+          // No cached data and API failed
+          if (emptyView) emptyView.style.display = 'block';
+        }
+      }
+    }
   } else {
     // User not signed in - show signin prompt
     if (signinView) signinView.style.display = 'block';
-    if (emptyView) emptyView.style.display = 'none';
   }
 }
 
@@ -395,6 +443,277 @@ function restoreSavedTab() {
     }
   }, 100);
 }
+
+async function fetchUserCourses(testToken = null) {
+  let token = testToken;
+  
+  if (!token && currentUser) {
+    try {
+      // Get a valid token (automatically refreshes if needed)
+      token = await window.firebaseAuth.getValidToken();
+    } catch (error) {
+      console.error('Failed to get valid token:', error);
+      // Try to load from localStorage if token issues (offline mode)
+      return loadCoursesFromCache();
+    }
+  }
+  
+  if (!token) {
+    // Try to load from localStorage if no token (offline mode)
+    return loadCoursesFromCache();
+  }
+  
+  try {
+    console.log('Fetching courses with token:', token.substring(0, 50) + '...');
+    const response = await fetch('https://eigenarc.com/api/courses', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('API Response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error response:', errorText);
+      
+      // If token is invalid/expired and we haven't already tried refresh
+      if (response.status === 401 && !testToken && currentUser) {
+        console.log('Token expired, attempting refresh and retry...');
+        try {
+          const refreshedToken = await window.firebaseAuth.getValidToken();
+          // Retry with refreshed token
+          return await fetchUserCourses(refreshedToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          // Fall through to cache logic
+        }
+      }
+      
+      // If API fails, try to load from cache
+      console.log('API failed, attempting to load from cache...');
+      const cachedCourses = loadCoursesFromCache();
+      if (cachedCourses && cachedCourses.length > 0) {
+        console.log('Loaded courses from cache:', cachedCourses.length, 'courses');
+        return cachedCourses;
+      }
+      
+      throw new Error(`Failed to fetch courses: ${response.status} ${response.statusText}`);
+    }
+    
+    const courses = await response.json();
+    console.log('Fetched courses from API:', courses);
+    
+    // Store courses in localStorage for offline access
+    saveCoursesToCache(courses);
+    
+    return courses;
+  } catch (error) {
+    console.error('Error fetching user courses:', error);
+    
+    // If network error, try to load from cache
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.log('Network error, attempting to load from cache...');
+      const cachedCourses = loadCoursesFromCache();
+      if (cachedCourses && cachedCourses.length > 0) {
+        console.log('Loaded courses from cache (offline):', cachedCourses.length, 'courses');
+        return cachedCourses;
+      }
+    }
+    
+    throw error;
+  }
+}
+
+function renderUserCourses(courses, isStale = false) {
+  const container = document.getElementById('coursesContainer');
+  if (!container) return;
+  
+  // Add offline/stale data indicator
+  const statusIndicator = isStale ? 
+    '<div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 14px; color: #856404;">📱 Showing cached courses (offline mode)</div>' : '';
+  
+  const coursesHtml = courses.map(course => {
+    const completionStatus = course.isCompleted ? 
+      '<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">✓ Completed</span>' :
+      '<span style="background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">In Progress</span>';
+      
+    const enrolledDate = new Date(course.enrolledAt).toLocaleDateString();
+    const completedDate = course.completedAt ? new Date(course.completedAt).toLocaleDateString() : null;
+    
+    return `
+      <div class="course-card" data-course-id="${course.id}" style="
+        border: 1px solid #e1e5e9; 
+        border-radius: 8px; 
+        padding: 20px; 
+        margin-bottom: 16px; 
+        background: white; 
+        cursor: pointer; 
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">
+        <div class="course-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${course.title}</h4>
+          ${completionStatus}
+        </div>
+        <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.4;">${course.description}</p>
+        <div class="course-meta" style="margin-bottom: 16px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">Duration: ${course.duration}</span>
+            <span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">Level: ${course.skillLevel}</span>
+            ${course.phases ? `<span style="background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${course.phases.length} phases</span>` : ''}
+          </div>
+        </div>
+        <div class="course-dates" style="color: #888; font-size: 12px; display: flex; justify-content: space-between;">
+          <span>Enrolled: ${enrolledDate}</span>
+          ${completedDate ? `<span>Completed: ${completedDate}</span>` : '<span>Continue learning →</span>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = statusIndicator + coursesHtml;
+  
+  // Add click handlers for course cards
+  container.querySelectorAll('.course-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const courseId = card.dataset.courseId;
+      const course = courses.find(c => c.id === courseId);
+      if (course) {
+        // TODO: Navigate to course detail view or start learning
+        console.log('Course clicked:', course);
+      }
+    });
+    
+    // Add hover effects
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'translateY(-2px)';
+      card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'translateY(0)';
+      card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    });
+  });
+}
+
+// Cache management functions
+function saveCoursesToCache(courses) {
+  try {
+    const cacheData = {
+      courses: courses,
+      timestamp: Date.now(),
+      userId: currentUser ? currentUser.uid : 'unknown'
+    };
+    localStorage.setItem('eigenarc_courses_cache', JSON.stringify(cacheData));
+    console.log('Courses cached successfully:', courses.length, 'courses');
+  } catch (error) {
+    console.error('Error saving courses to cache:', error);
+  }
+}
+
+function loadCoursesFromCache() {
+  try {
+    const cacheData = localStorage.getItem('eigenarc_courses_cache');
+    if (!cacheData) {
+      console.log('No courses cache found');
+      return null;
+    }
+    
+    const parsed = JSON.parse(cacheData);
+    const cacheAge = Date.now() - parsed.timestamp;
+    
+    // Don't use cache older than 24 hours
+    if (cacheAge > 24 * 60 * 60 * 1000) {
+      console.log('Courses cache expired, removing');
+      localStorage.removeItem('eigenarc_courses_cache');
+      return null;
+    }
+    
+    // Check if cache is for current user
+    if (currentUser && parsed.userId !== currentUser.uid) {
+      console.log('Courses cache is for different user, removing');
+      localStorage.removeItem('eigenarc_courses_cache');
+      return null;
+    }
+    
+    console.log('Loaded courses from cache:', parsed.courses.length, 'courses, age:', Math.round(cacheAge / 60000), 'minutes');
+    return parsed.courses;
+  } catch (error) {
+    console.error('Error loading courses from cache:', error);
+    localStorage.removeItem('eigenarc_courses_cache');
+    return null;
+  }
+}
+
+function getCacheAge() {
+  try {
+    const cacheData = localStorage.getItem('eigenarc_courses_cache');
+    if (!cacheData) return Infinity;
+    
+    const parsed = JSON.parse(cacheData);
+    return Date.now() - parsed.timestamp;
+  } catch (error) {
+    return Infinity;
+  }
+}
+
+function clearCoursesCache() {
+  localStorage.removeItem('eigenarc_courses_cache');
+  console.log('Courses cache cleared');
+}
+
+// Function to handle user sign out (can be called from UI)
+window.signOutUser = async function() {
+  try {
+    console.log('Signing out user...');
+    const result = await window.firebaseAuth.signOut();
+    
+    if (result) {
+      // Clear cached courses
+      clearCoursesCache();
+      
+      // Reset current user
+      currentUser = null;
+      
+      // Refresh the UI to show signed out state
+      showScreen('homeScreen');
+      
+      console.log('User signed out successfully');
+      return true;
+    } else {
+      throw new Error('Sign out failed');
+    }
+  } catch (error) {
+    console.error('Sign out error:', error);
+    return false;
+  }
+};
+
+// Function to check token validity and refresh if needed
+window.ensureValidToken = async function() {
+  try {
+    if (!currentUser) {
+      throw new Error('No user signed in');
+    }
+    
+    const token = await window.firebaseAuth.getValidToken();
+    return token;
+  } catch (error) {
+    console.error('Token validation error:', error);
+    
+    // If token issues persist, sign out user
+    if (error.message.includes('Refresh token expired') || error.message.includes('No user signed in')) {
+      await window.signOutUser();
+    }
+    
+    throw error;
+  }
+};
+
 
 // Make function globally available
 window.renderExamplePathways = function() {
@@ -779,6 +1098,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (createPlanSigninBtn) {
       createPlanSigninBtn.addEventListener('click', signInWithFirebase);
     }
+    
+    // Sign out button event listener
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const success = await window.signOutUser();
+        if (success) {
+          // UI will be updated automatically in signOutUser function
+          console.log('User signed out from UI');
+        } else {
+          alert('Sign out failed. Please try again.');
+        }
+      });
+    }
 
     const pathwaysSigninBtn = document.getElementById('pathwaysSigninBtn');
     if (pathwaysSigninBtn) {
@@ -798,9 +1132,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 100);
   
   // Restore saved state (screen, tab, user)
-  chrome.storage.local.get(['currentUser', 'currentScreen', 'currentTab'], (result) => {
+  chrome.storage.local.get(['currentUser', 'currentScreen', 'currentTab', 'firebaseAuth'], async (result) => {
     if (result.currentUser) {
       currentUser = result.currentUser;
+      
+      // Check if token needs refresh on startup
+      if (result.firebaseAuth && result.firebaseAuth.tokenExpiry) {
+        const now = Date.now();
+        const tokenExpiry = result.firebaseAuth.tokenExpiry;
+        
+        // If token expired or expiring in next minute, try to refresh
+        if (now >= tokenExpiry - 60000) {
+          console.log('Stored token expired, attempting refresh on startup...');
+          try {
+            await window.firebaseAuth.getValidToken();
+          } catch (error) {
+            console.error('Startup token refresh failed:', error);
+            // If refresh fails, user will be signed out when they try to use the app
+          }
+        }
+      }
     }
     
     // Set default tab based on authentication status

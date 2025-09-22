@@ -140,14 +140,21 @@ window.firebaseAuth = {
         };
       }
       
-      // Store user data locally
-      currentUser = userData.user;
+      // Store user data locally with refresh token and expiry
+      currentUser = {
+        ...userData.user,
+        firebaseToken: firebaseAuth.firebaseIdToken,
+        refreshToken: firebaseAuth.refreshToken,
+        tokenExpiry: Date.now() + (parseInt(firebaseAuth.expiresIn) * 1000)
+      };
+      
       await chrome.storage.local.set({ 
         currentUser: currentUser,
         firebaseAuth: {
           idToken: firebaseAuth.firebaseIdToken,
           refreshToken: firebaseAuth.refreshToken,
-          expiresIn: firebaseAuth.expiresIn
+          expiresIn: firebaseAuth.expiresIn,
+          tokenExpiry: currentUser.tokenExpiry
         }
       });
       
@@ -194,6 +201,106 @@ window.firebaseAuth = {
     } catch (error) {
       console.error('Sign out error:', error);
       return false;
+    }
+  },
+  
+  refreshFirebaseToken: async () => {
+    try {
+      if (!currentUser || !currentUser.refreshToken) {
+        throw new Error('No refresh token available');
+      }
+      
+      console.log('Refreshing Firebase ID token...');
+      
+      const refreshUrl = `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.apiKey}`;
+      const response = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          refresh_token: currentUser.refreshToken
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Token refresh failed:', error);
+        
+        // If refresh token is expired, sign out
+        if (error.error?.message?.includes('TOKEN_EXPIRED') || response.status === 400) {
+          console.log('Refresh token expired, signing out user');
+          await window.firebaseAuth.signOut();
+          throw new Error('Refresh token expired - user signed out');
+        }
+        
+        throw new Error(`Token refresh failed: ${error.error?.message || response.status}`);
+      }
+      
+      const tokenData = await response.json();
+      
+      // Update current user with new token
+      currentUser = {
+        ...currentUser,
+        firebaseToken: tokenData.id_token,
+        refreshToken: tokenData.refresh_token,
+        tokenExpiry: Date.now() + (parseInt(tokenData.expires_in) * 1000)
+      };
+      
+      // Update storage
+      await chrome.storage.local.set({ 
+        currentUser: currentUser,
+        firebaseAuth: {
+          idToken: tokenData.id_token,
+          refreshToken: tokenData.refresh_token,
+          expiresIn: tokenData.expires_in,
+          tokenExpiry: currentUser.tokenExpiry
+        }
+      });
+      
+      console.log('Firebase token refreshed successfully');
+      return {
+        success: true,
+        token: tokenData.id_token
+      };
+      
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+  
+  getValidToken: async () => {
+    try {
+      if (!currentUser || !currentUser.firebaseToken) {
+        throw new Error('No user signed in');
+      }
+      
+      // Check if token is expired or will expire in next 5 minutes
+      const now = Date.now();
+      const buffer = 5 * 60 * 1000; // 5 minutes buffer
+      
+      if (now + buffer >= currentUser.tokenExpiry) {
+        console.log('Token expired or expiring soon, refreshing...');
+        const refreshResult = await window.firebaseAuth.refreshFirebaseToken();
+        
+        if (!refreshResult.success) {
+          throw new Error('Failed to refresh token: ' + refreshResult.error);
+        }
+        
+        return currentUser.firebaseToken;
+      }
+      
+      // Token is still valid
+      return currentUser.firebaseToken;
+      
+    } catch (error) {
+      console.error('Get valid token error:', error);
+      throw error;
     }
   },
   

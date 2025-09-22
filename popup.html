@@ -629,6 +629,20 @@
             </p>
           </div>
           
+          <!-- Loading pathways view -->
+          <div id="pathwaysLoading" style="display: none; text-align: center; padding: 40px 20px;">
+            <p style="color: #666;">Loading your pathways...</p>
+          </div>
+          
+          <!-- Signed in with pathways view -->
+          <div id="pathwaysList" style="display: none; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="color: hsl(142, 35%, 42%); margin: 0; font-size: 18px;">My Learning Pathways</h3>
+              <button id="signOutBtn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer;">Sign Out</button>
+            </div>
+            <div id="coursesContainer"></div>
+          </div>
+          
           <!-- Signed in but no pathways view -->
           <div id="pathwaysEmpty" class="no-pathways-message" style="display: none;">
             <p style="text-align: center; color: #666; margin: 40px 0;">
