@@ -391,7 +391,7 @@ window.renderExamplePathways = function() {
   if (!container) return;
   
   const pathwaysHtml = Object.entries(samplePlans).map(([key, plan]) => `
-    <div class="guest-plan-card" data-plan-key="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+    <div class="guest-plan-card" data-plan-key="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; cursor: pointer; transition: all 0.2s;">
       <div class="plan-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${plan.title}</h4>
         <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.phases.reduce((total, phase) => total + phase.lessons.length, 0)} lessons</span>
@@ -419,6 +419,15 @@ window.renderExamplePathways = function() {
       if (planKey) {
         showPathwayDetails(planKey);
       }
+    });
+    
+    // Add hover effects via JavaScript
+    card.addEventListener('mouseenter', () => {
+      card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.boxShadow = 'none';
     });
   });
 }
@@ -449,7 +458,7 @@ window.showPathwayDetails = function(planKey) {
               ${phase.lessons.map((lesson, lessonIndex) => {
                 const isCompleted = isLessonCompleted(lesson.id);
                 return `
-                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}">
                   <div class="lesson-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
                     ${isCompleted ? '✓' : lessonIndex + 1}
                   </div>
@@ -495,7 +504,7 @@ window.showPathwayDetails = function(planKey) {
       });
     });
     
-    // Add lesson click functionality using delegated events
+    // Add lesson click functionality and hover effects using delegated events
     container.addEventListener('click', (e) => {
       const lessonItem = e.target.closest('.lesson-item');
       if (!lessonItem) return;
@@ -532,6 +541,21 @@ window.showPathwayDetails = function(planKey) {
       // Use existing selectLesson function to inject prompt into ChatGPT
       selectLesson({ title: lesson.title, timeline: '' });
     });
+    
+    // Add hover effects using delegated events
+    container.addEventListener('mouseenter', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (lessonItem) {
+        lessonItem.style.background = '#f8f9fa';
+      }
+    }, true);
+    
+    container.addEventListener('mouseleave', (e) => {
+      const lessonItem = e.target.closest('.lesson-item');
+      if (lessonItem) {
+        lessonItem.style.background = 'transparent';
+      }
+    }, true);
   }
 }
 
