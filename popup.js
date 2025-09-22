@@ -1431,16 +1431,16 @@ window.renderExamplePathways = function() {
     <div class="guest-plan-card" data-plan-key="${key}" style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; cursor: pointer; transition: all 0.2s;">
       <div class="plan-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h4 style="margin: 0; color: hsl(142, 35%, 42%); font-size: 16px; font-weight: 600;">${plan.title}</h4>
-        <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.phases.reduce((total, phase) => total + phase.lessons.length, 0)} lessons</span>
+        <span class="plan-duration" style="background: #f0f8f0; color: hsl(142, 35%, 42%); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${plan.phases.reduce((total, phase) => total + phase.tasks.length, 0)} tasks</span>
       </div>
       <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.4;">${plan.description}</p>
       <div class="pathway-topics" style="margin-bottom: 16px;">
         ${(() => {
-          const allLessons = plan.phases.flatMap(p => p.lessons);
-          return allLessons.slice(0, 3).map(lesson => 
-            `<span style="display: inline-block; background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; margin-bottom: 4px;">${lesson.title}</span>`
+          const allTasks = plan.phases.flatMap(p => p.tasks);
+          return allTasks.slice(0, 3).map(task => 
+            `<span style="display: inline-block; background: #f8f9fa; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; margin-bottom: 4px;">${task.length > 50 ? task.substring(0, 50) + '...' : task}</span>`
           ).join('') + 
-          (allLessons.length > 3 ? `<span style="color: #999; font-size: 12px;">+${allLessons.length - 3} more lessons...</span>` : '');
+          (allTasks.length > 3 ? `<span style="color: #999; font-size: 12px;">+${allTasks.length - 3} more tasks...</span>` : '');
         })()}
       </div>
       <div style="color: #999; font-size: 12px; text-align: right; margin-top: 8px;">Click to explore pathway →</div>
@@ -1489,19 +1489,20 @@ window.showPathwayDetails = function(planKey) {
               </div>
               <div>
                 <div style="font-weight: 600; color: #333; font-size: 15px;">${phase.title}</div>
-                <div style="font-size: 12px; color: #888;">${phase.lessons.length} lessons</div>
+                <div style="font-size: 12px; color: #888;">${phase.tasks.length} tasks</div>
               </div>
             </div>
-            <div class="lessons-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
-              ${phase.lessons.map((lesson, lessonIndex) => {
-                const isCompleted = isLessonCompleted(lesson.id);
+            <div class="tasks-container" data-phase-index="${phaseIndex}" style="margin-left: 52px;">
+              ${phase.tasks.map((task, taskIndex) => {
+                const taskId = `${planKey}-${phaseIndex}-${taskIndex}`;
+                const isCompleted = isLessonCompleted(taskId);
                 return `
-                <div class="lesson-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-lesson-index="${lessonIndex}">
-                  <div class="lesson-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
-                    ${isCompleted ? '✓' : lessonIndex + 1}
+                <div class="task-item" style="display: flex; align-items: center; padding: 8px 0; cursor: pointer; border-radius: 4px; padding-left: 8px; transition: background 0.2s;" data-plan="${planKey}" data-phase="${phaseIndex}" data-task-index="${taskIndex}">
+                  <div class="task-badge" style="width: 20px; height: 20px; border-radius: 50%; background: #f0f8f0; color: hsl(142, 35%, 42%); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-right: 10px;">
+                    ${isCompleted ? '✓' : taskIndex + 1}
                   </div>
                   <div style="flex: 1;">
-                    <div class="lesson-title" style="font-weight: 500; color: #333; font-size: 14px; text-decoration: ${isCompleted ? 'line-through' : 'none'}; opacity: ${isCompleted ? '0.6' : '1'};">${lesson.title}</div>
+                    <div class="task-title" style="font-weight: 500; color: #333; font-size: 14px; text-decoration: ${isCompleted ? 'line-through' : 'none'}; opacity: ${isCompleted ? '0.6' : '1'};">${task}</div>
                   </div>
                   <div style="color: #999; font-size: 12px; margin-left: 8px;">→</div>
                 </div>
@@ -1533,65 +1534,68 @@ window.showPathwayDetails = function(planKey) {
     container.querySelectorAll('.phase-header').forEach(header => {
       header.addEventListener('click', () => {
         const phaseIndex = header.getAttribute('data-phase-index');
-        const lessonsContainer = container.querySelector(`.lessons-container[data-phase-index="${phaseIndex}"]`);
+        const tasksContainer = container.querySelector(`.tasks-container[data-phase-index="${phaseIndex}"]`);
         const expandIcon = header.querySelector('.expand-icon');
         
-        const isCollapsed = lessonsContainer.style.display === 'none';
-        lessonsContainer.style.display = isCollapsed ? '' : 'none';
+        const isCollapsed = tasksContainer.style.display === 'none';
+        tasksContainer.style.display = isCollapsed ? '' : 'none';
         expandIcon.textContent = isCollapsed ? '▼' : '▶';
       });
     });
     
     // Add lesson click functionality and hover effects using delegated events
     container.addEventListener('click', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (!lessonItem) return;
+      const taskItem = e.target.closest('.task-item');
+      if (!taskItem) return;
       
-      const clickedPlanKey = lessonItem.getAttribute('data-plan');
-      const phaseIndex = lessonItem.getAttribute('data-phase');
-      const lessonIndex = lessonItem.getAttribute('data-lesson-index');
+      const clickedPlanKey = taskItem.getAttribute('data-plan');
+      const phaseIndex = taskItem.getAttribute('data-phase');
+      const taskIndex = taskItem.getAttribute('data-task-index');
       
       const plan = samplePlans[clickedPlanKey];
       if (!plan) return;
       
       const phase = plan.phases[parseInt(phaseIndex)];
-      const lesson = phase.lessons[parseInt(lessonIndex)];
+      const task = phase.tasks[parseInt(taskIndex)];
       
       // Set currentPlan for the selectLesson function
       currentPlan = plan;
       
-      // Toggle lesson completion
-      const isCompleted = toggleLessonCompletion(lesson.id);
+      // Create unique task ID
+      const taskId = `${clickedPlanKey}-${phaseIndex}-${taskIndex}`;
+      
+      // Toggle task completion
+      const isCompleted = toggleLessonCompletion(taskId);
       
       // Update visual state
-      const lessonTitle = lessonItem.querySelector('.lesson-title');
-      const lessonBadge = lessonItem.querySelector('.lesson-badge');
+      const taskTitle = taskItem.querySelector('.task-title');
+      const taskBadge = taskItem.querySelector('.task-badge');
       
-      if (lessonTitle) {
-        lessonTitle.style.textDecoration = isCompleted ? 'line-through' : 'none';
-        lessonTitle.style.opacity = isCompleted ? '0.6' : '1';
+      if (taskTitle) {
+        taskTitle.style.textDecoration = isCompleted ? 'line-through' : 'none';
+        taskTitle.style.opacity = isCompleted ? '0.6' : '1';
       }
       
-      if (lessonBadge) {
-        lessonBadge.textContent = isCompleted ? '✓' : (parseInt(lessonIndex) + 1);
+      if (taskBadge) {
+        taskBadge.textContent = isCompleted ? '✓' : (parseInt(taskIndex) + 1);
       }
       
       // Use existing selectLesson function to inject prompt into ChatGPT
-      selectLesson({ title: lesson.title, timeline: '' });
+      selectLesson({ title: task, timeline: '' });
     });
     
     // Add hover effects using delegated events
     container.addEventListener('mouseenter', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (lessonItem) {
-        lessonItem.style.background = '#f8f9fa';
+      const taskItem = e.target.closest('.task-item');
+      if (taskItem) {
+        taskItem.style.background = '#f8f9fa';
       }
     }, true);
     
     container.addEventListener('mouseleave', (e) => {
-      const lessonItem = e.target.closest('.lesson-item');
-      if (lessonItem) {
-        lessonItem.style.background = 'transparent';
+      const taskItem = e.target.closest('.task-item');
+      if (taskItem) {
+        taskItem.style.background = 'transparent';
       }
     }, true);
   }
