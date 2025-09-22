@@ -14,6 +14,10 @@ let currentViewState = {
 };
 let currentTab = 'currentPlan';
 
+// Chat and conversation state
+let currentConversationId = null;
+let generatedPlanId = null;
+
 // Sample learning plans data - using real course structure
 const samplePlans = {
   screenrecorder: {
@@ -246,22 +250,61 @@ function sendChatMessage() {
   }, 1000);
 }
 
-function sendCreatePlanMessage() {
+async function sendCreatePlanMessage() {
   const input = document.getElementById('createPlanInput');
   const message = input.value.trim();
   
   if (!message) return;
   
+  // Disable input and button during API call
+  input.disabled = true;
+  const sendBtn = document.getElementById('sendCreatePlanBtn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending...';
+  
+  // Add user message to chat
   addMessageToChat('user', message, 'createPlanMessages');
   input.value = '';
   
-  setTimeout(() => {
-    addMessageToChat('ai', "Great! I'll create a new learning plan for you. This might take a moment...", 'createPlanMessages');
+  try {
+    // Create conversation if not exists
+    if (!currentConversationId) {
+      await createConversation("Learning Plan Creation");
+    }
     
-    setTimeout(() => {
-      addMessageToChat('ai', "✅ Your new learning plan is ready! You can now find it in your plan selector.", 'createPlanMessages');
-    }, 2000);
-  }, 1000);
+    // Send message and get AI response
+    const result = await sendMessage(message);
+    
+    // Add AI response to chat
+    if (result.aiMessage && result.aiMessage.content) {
+      const aiContent = typeof result.aiMessage.content === 'string' 
+        ? result.aiMessage.content 
+        : result.aiMessage.content.conversationReply || 'I received your message.';
+      
+      addMessageToChat('ai', aiContent, 'createPlanMessages');
+      
+      // Check if AI suggests plan generation or if content indicates readiness to create a plan
+      if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion') {
+        // Show plan generation options
+        showPlanGenerationOptions();
+      } else if (aiContent.toLowerCase().includes('create') && aiContent.toLowerCase().includes('plan')) {
+        // Auto-suggest plan generation if AI mentions creating a plan
+        setTimeout(() => {
+          addMessageToChat('ai', 'I can create a personalized learning plan for you! Would you like me to generate one based on our conversation?', 'createPlanMessages');
+          showPlanGenerationOptions();
+        }, 1000);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error in chat:', error);
+    addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.', 'createPlanMessages');
+  } finally {
+    // Re-enable input and button
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+  }
 }
 
 function addMessageToChat(sender, message, containerId) {
@@ -271,6 +314,355 @@ function addMessageToChat(sender, message, containerId) {
   messageDiv.innerHTML = message;
   container.appendChild(messageDiv);
   container.scrollTop = container.scrollHeight;
+}
+
+// Plan Generation UI Functions
+function showPlanGenerationOptions() {
+  const container = document.getElementById('createPlanMessages');
+  const planUI = document.createElement('div');
+  planUI.id = 'planGenerationUI';
+  planUI.className = 'plan-generation-ui';
+  planUI.style.cssText = `
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+  `;
+  
+  planUI.innerHTML = `
+    <h4 style="margin: 0 0 16px 0; color: hsl(142, 35%, 42%);">🎯 Create Your Learning Plan</h4>
+    <p style="margin: 0 0 16px 0; color: #666; font-size: 14px;">Let me generate a personalized learning plan for you. Please specify your preferences:</p>
+    
+    <div style="display: grid; gap: 12px;">
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Subject/Topic:</label>
+        <input type="text" id="planSubject" placeholder="e.g., Web Development, Data Science" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Skill Level:</label>
+          <select id="planSkillLevel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Timeline:</label>
+          <select id="planTimeline" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+            <option value="2 weeks">2 weeks</option>
+            <option value="4 weeks" selected>4 weeks</option>
+            <option value="8 weeks">8 weeks</option>
+            <option value="12 weeks">12 weeks</option>
+            <option value="6 months">6 months</option>
+          </select>
+        </div>
+      </div>
+      
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Daily Time Commitment:</label>
+        <select id="planDailyTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          <option value="30 minutes">30 minutes</option>
+          <option value="1 hour" selected>1 hour</option>
+          <option value="2 hours">2 hours</option>
+          <option value="3+ hours">3+ hours</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 4px; color: #333;">Learning Goals:</label>
+        <textarea id="planGoals" placeholder="What specific outcomes do you want to achieve?" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; height: 60px; resize: vertical;"></textarea>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 12px; margin-top: 16px;">
+      <button id="generatePlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
+        ✨ Generate Learning Plan
+      </button>
+      <button id="cancelPlanBtn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+        Cancel
+      </button>
+    </div>
+  `;
+  
+  container.appendChild(planUI);
+  container.scrollTop = container.scrollHeight;
+  
+  // Add event listeners
+  document.getElementById('generatePlanBtn').addEventListener('click', handlePlanGeneration);
+  document.getElementById('cancelPlanBtn').addEventListener('click', () => {
+    planUI.remove();
+  });
+}
+
+async function handlePlanGeneration() {
+  const generateBtn = document.getElementById('generatePlanBtn');
+  const originalText = generateBtn.textContent;
+  generateBtn.disabled = true;
+  generateBtn.textContent = 'Generating Plan...';
+  
+  try {
+    const subject = document.getElementById('planSubject').value.trim() || 'General learning goal';
+    const skillLevel = document.getElementById('planSkillLevel').value;
+    const timeline = document.getElementById('planTimeline').value;
+    const dailyTime = document.getElementById('planDailyTime').value;
+    const goals = document.getElementById('planGoals').value.trim() || 'Build understanding and practical skills';
+    
+    const plan = await generatePlan({
+      subject,
+      skillLevel,
+      timeline,
+      dailyTime,
+      goals
+    });
+    
+    // Remove the generation UI
+    document.getElementById('planGenerationUI').remove();
+    
+    // Show the generated plan
+    showGeneratedPlan(plan);
+    
+  } catch (error) {
+    console.error('Error generating plan:', error);
+    addMessageToChat('ai', 'Sorry, I encountered an error while generating your plan. Please try again.', 'createPlanMessages');
+    generateBtn.disabled = false;
+    generateBtn.textContent = originalText;
+  }
+}
+
+function showGeneratedPlan(plan) {
+  const container = document.getElementById('createPlanMessages');
+  
+  // Add success message
+  addMessageToChat('ai', '🎉 Great! I\'ve created your personalized learning plan. Here\'s what I\'ve prepared for you:', 'createPlanMessages');
+  
+  // Create plan preview
+  const planPreview = document.createElement('div');
+  planPreview.className = 'generated-plan-preview';
+  planPreview.style.cssText = `
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+  `;
+  
+  planPreview.innerHTML = `
+    <h4 style="margin: 0 0 12px 0; color: hsl(142, 35%, 42%);">${plan.title}</h4>
+    <p style="margin: 0 0 16px 0; color: #666; font-size: 14px; line-height: 1.5;">${plan.description}</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Duration</div>
+        <div style="font-weight: 600; color: #333;">${plan.duration}</div>
+      </div>
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Level</div>
+        <div style="font-weight: 600; color: #333;">${plan.skillLevel}</div>
+      </div>
+      <div style="text-align: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Phases</div>
+        <div style="font-weight: 600; color: #333;">${plan.phases.length}</div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 12px;">
+      <button id="enrollInPlanBtn" style="background: hsl(142, 35%, 42%); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
+        🚀 Enroll in This Plan
+      </button>
+      <button id="viewPlanDetailsBtn" style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+        View Details
+      </button>
+    </div>
+  `;
+  
+  container.appendChild(planPreview);
+  container.scrollTop = container.scrollHeight;
+  
+  // Add event listeners
+  document.getElementById('enrollInPlanBtn').addEventListener('click', () => handlePlanEnrollment(plan.id));
+  document.getElementById('viewPlanDetailsBtn').addEventListener('click', () => showPlanDetails(plan));
+}
+
+async function handlePlanEnrollment(planId) {
+  const enrollBtn = document.getElementById('enrollInPlanBtn');
+  const originalText = enrollBtn.textContent;
+  enrollBtn.disabled = true;
+  enrollBtn.textContent = 'Enrolling...';
+  
+  try {
+    await enrollInPlan(planId);
+    
+    // Show success message
+    addMessageToChat('ai', '✅ Congratulations! You\'ve successfully enrolled in your learning plan. You can now find it in your "My Pathways" tab and start learning immediately!', 'createPlanMessages');
+    
+    // Update My Pathways view if visible
+    if (currentTab === 'currentPlan') {
+      updateMyPathwaysView();
+    }
+    
+    // Remove the plan preview
+    document.querySelector('.generated-plan-preview').remove();
+    
+  } catch (error) {
+    console.error('Error enrolling in plan:', error);
+    addMessageToChat('ai', 'Sorry, there was an error enrolling you in the plan. Please try again.', 'createPlanMessages');
+    enrollBtn.disabled = false;
+    enrollBtn.textContent = originalText;
+  }
+}
+
+function showPlanDetails(plan) {
+  const container = document.getElementById('createPlanMessages');
+  const detailsDiv = document.createElement('div');
+  detailsDiv.className = 'plan-details';
+  detailsDiv.style.cssText = `
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    max-height: 300px;
+    overflow-y: auto;
+  `;
+  
+  const phasesHtml = plan.phases.map((phase, index) => `
+    <div style="margin-bottom: 16px; padding: 12px; background: white; border-radius: 6px;">
+      <h5 style="margin: 0 0 8px 0; color: hsl(142, 35%, 42%);">Phase ${index + 1}: ${phase.title}</h5>
+      <p style="margin: 0 0 8px 0; color: #666; font-size: 13px;">${phase.description || ''}</p>
+      <div style="font-size: 12px; color: #888;">${phase.tasks ? phase.tasks.length : 0} tasks included</div>
+    </div>
+  `).join('');
+  
+  detailsDiv.innerHTML = `
+    <h4 style="margin: 0 0 16px 0; color: #333;">📋 Plan Details</h4>
+    ${phasesHtml}
+    <button onclick="this.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Close Details</button>
+  `;
+  
+  container.appendChild(detailsDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+// API Functions for Chat and Plan Generation
+async function createConversation(title = "New Conversation") {
+  try {
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch('https://eigenarc.com/api/conversations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const conversation = await response.json();
+    currentConversationId = conversation.id;
+    console.log('Conversation created:', conversation.id);
+    return conversation;
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+}
+
+async function sendMessage(content) {
+  try {
+    if (!currentConversationId) {
+      throw new Error('No active conversation');
+    }
+
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch(`https://eigenarc.com/api/conversations/${currentConversationId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Message sent and AI response received');
+    return result;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+}
+
+async function generatePlan(params) {
+  try {
+    if (!currentConversationId) {
+      throw new Error('No active conversation');
+    }
+
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch('https://eigenarc.com/api/plans/generate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        conversationId: currentConversationId,
+        ...params
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const plan = await response.json();
+    generatedPlanId = plan.id;
+    console.log('Plan generated:', plan.id);
+    return plan;
+  } catch (error) {
+    console.error('Error generating plan:', error);
+    throw error;
+  }
+}
+
+async function enrollInPlan(learningPlanId) {
+  try {
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch('https://eigenarc.com/api/courses/enroll', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ learningPlanId })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const enrollment = await response.json();
+    console.log('Enrolled in plan:', learningPlanId);
+    
+    // Clear cache to refresh courses in My Pathways
+    clearCoursesCache();
+    
+    return enrollment;
+  } catch (error) {
+    console.error('Error enrolling in plan:', error);
+    throw error;
+  }
 }
 
 async function signInWithFirebase() {
@@ -1755,6 +2147,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendCreatePlanBtn = document.getElementById('sendCreatePlanBtn');
   if (sendCreatePlanBtn) {
     sendCreatePlanBtn.addEventListener('click', sendCreatePlanMessage);
+  }
+  
+  // Add keyboard support for chat input
+  const createPlanInput = document.getElementById('createPlanInput');
+  if (createPlanInput) {
+    createPlanInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendCreatePlanMessage();
+      }
+    });
   }
   
   // Add guest signin button handler
