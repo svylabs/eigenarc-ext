@@ -615,7 +615,22 @@
       <div class="tab-content">
         <!-- My Pathways Tab -->
         <div id="currentPlanTab" class="tab-panel">
-          <div class="no-pathways-message">
+          <!-- Not signed in view -->
+          <div id="pathwaysSignin" class="signin-content" style="display: none; text-align: center; padding: 40px 20px;">
+            <h3 style="color: hsl(142, 35%, 42%); margin-bottom: 20px;">My Pathways</h3>
+            <p style="color: #666; margin-bottom: 30px; line-height: 1.5;">
+              Sign in to view your personalized learning pathways and track your progress.
+            </p>
+            <button class="signin-btn" id="pathwaysSigninBtn" style="background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%); color: white; border: none; padding: 12px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px;">
+              Sign in with Google
+            </button>
+            <p style="margin-top: 20px; font-size: 13px; color: #888;">
+              <a href="#" id="pathwaysBrowseExamplesLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Browse example pathways</a> while you decide
+            </p>
+          </div>
+          
+          <!-- Signed in but no pathways view -->
+          <div id="pathwaysEmpty" class="no-pathways-message" style="display: none;">
             <p style="text-align: center; color: #666; margin: 40px 0;">
               No pathways yet.<br>
               <a href="#" id="checkExamplesLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Check examples</a> or create your first learning plan.

@@ -174,6 +174,7 @@ function switchTab(tabName, element) {
   // Show selected tab content
   if (tabName === 'currentPlan') {
     document.getElementById('currentPlanTab').classList.remove('hidden');
+    updateMyPathwaysView();
   } else if (tabName === 'createPlan') {
     document.getElementById('createPlanTab').classList.remove('hidden');
     updateCreatePlanView();
@@ -206,6 +207,21 @@ function updateCreatePlanView() {
     // User not signed in - show signin prompt
     if (signinView) signinView.style.display = 'block';
     if (signedInView) signedInView.style.display = 'none';
+  }
+}
+
+function updateMyPathwaysView() {
+  const signinView = document.getElementById('pathwaysSignin');
+  const emptyView = document.getElementById('pathwaysEmpty');
+  
+  if (currentUser) {
+    // User is signed in - show empty pathways message
+    if (signinView) signinView.style.display = 'none';
+    if (emptyView) emptyView.style.display = 'block';
+  } else {
+    // User not signed in - show signin prompt
+    if (signinView) signinView.style.display = 'block';
+    if (emptyView) emptyView.style.display = 'none';
   }
 }
 
@@ -292,12 +308,11 @@ function generatePlanResponse(userMessage) {
   }
 }
 
-// Plan Management
+// Plan Management - Updated for new UI
 function loadCurrentPlan() {
-  const dropdown = document.getElementById('planDropdown');
-  if (dropdown) {
-    window.loadSelectedPlan();
-  }
+  console.log('Loading current plan - no specific plan to load for new UI');
+  // The new "My Pathways" tab shows "No pathways yet" message
+  // No need to load specific plan data since we removed the dropdown
 }
 
 function renderLessonsTable(tableOfContents) {
@@ -398,10 +413,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Remove try without signin functionality - no longer needed
   
-  document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
-  document.getElementById('signinBtn').addEventListener('click', signInWithFirebase);
-  document.getElementById('sendCreatePlanBtn').addEventListener('click', sendCreatePlanMessage);
-  document.getElementById('planDropdown').addEventListener('change', loadSelectedPlan);
+  // Add event listeners with null checks
+  const sendChatBtn = document.getElementById('sendChatBtn');
+  if (sendChatBtn) {
+    sendChatBtn.addEventListener('click', sendChatMessage);
+  }
+  
+  const signinBtn = document.getElementById('signinBtn');
+  if (signinBtn) {
+    signinBtn.addEventListener('click', signInWithFirebase);
+  }
+  
+  const sendCreatePlanBtn = document.getElementById('sendCreatePlanBtn');
+  if (sendCreatePlanBtn) {
+    sendCreatePlanBtn.addEventListener('click', sendCreatePlanMessage);
+  }
   
   // Add guest signin button handler
   const guestSigninBtn = document.getElementById('guestSigninBtn');
@@ -462,6 +488,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const createPlanSigninBtn = document.getElementById('createPlanSigninBtn');
     if (createPlanSigninBtn) {
       createPlanSigninBtn.addEventListener('click', signInWithFirebase);
+    }
+
+    const pathwaysSigninBtn = document.getElementById('pathwaysSigninBtn');
+    if (pathwaysSigninBtn) {
+      pathwaysSigninBtn.addEventListener('click', signInWithFirebase);
+    }
+
+    const pathwaysBrowseExamplesLink = document.getElementById('pathwaysBrowseExamplesLink');
+    if (pathwaysBrowseExamplesLink) {
+      pathwaysBrowseExamplesLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const examplesTabBtn = document.getElementById('examplesTabBtn');
+        if (examplesTabBtn) {
+          switchTab('examples', examplesTabBtn);
+        }
+      });
     }
   }, 100);
   
