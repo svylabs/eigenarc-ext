@@ -668,6 +668,7 @@ function showCourseDetail(course) {
   // Update view state
   currentViewState.view = 'courseDetail';
   currentViewState.courseId = course.id;
+  console.log('*** VIEW CHANGED TO courseDetail for course:', course.id);
   
   // Only reset scroll position if this is a different course
   if (isDifferentCourse || !previousCourseId) {
@@ -826,11 +827,18 @@ function showCourseDetail(course) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position after content is loaded
+  // Restore scroll position after content is fully loaded
   setTimeout(() => {
-    console.log('Course detail view loaded, restoring scroll position');
-    restoreScrollPosition();
-  }, 300);
+    console.log('Course detail content rendered, attempting restore...');
+    const scrollableElement = getScrollableElement();
+    const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
+    console.log('Restoring courseDetail to position:', savedPosition, 'Element height:', scrollableElement.scrollHeight);
+    
+    if (savedPosition > 0) {
+      scrollableElement.scrollTop = savedPosition;
+      console.log('Set scrollTop to:', savedPosition, 'Actual position:', scrollableElement.scrollTop);
+    }
+  }, 800); // Longer timeout to ensure content is fully rendered
 }
 
 // Function to go back to pathways list
@@ -847,6 +855,7 @@ function backToPathways() {
   // Update view state
   currentViewState.view = 'pathwaysList';
   currentViewState.courseId = null;
+  console.log('*** VIEW CHANGED TO pathwaysList');
   // Keep existing scroll positions - don't reset pathways list position
   
   // Save state and restore scroll position
@@ -919,6 +928,7 @@ function saveScrollPosition() {
   // Save scroll position for the current view
   currentViewState.scrollPositions[currentView] = scrollPosition;
   console.log(`*** SAVING scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
+  console.log('Current view state:', currentViewState.view, 'Course ID:', currentViewState.courseId);
   console.log('Updated scroll positions:', currentViewState.scrollPositions);
   saveViewState();
 }
