@@ -893,7 +893,7 @@ Generate comprehensive content that includes:
 4. Practice exercises as a numbered list
 5. Estimated time to complete
 IMPORTANT: 
-- For technical subjects (mathematics, physics, chemistry, engineering, etc.), use inline LaTeX like $E = mc^2$ or block LaTeX like $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
+- For technical subjects (mathematics, physics, chemistry, engineering, etc.), include relevant equations / calculations / code snippets / psuedocode
 - For non-technical subjects (arts, music, literature, history, etc.), DO NOT include equations
 - Make content educational, specific, and actionable
 
