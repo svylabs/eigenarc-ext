@@ -22,10 +22,11 @@ window.firebaseAuth = {
       
       // Step 1: Firebase is already loaded from local files
       
-      // Step 2: Get Google OAuth token via Chrome Identity API
+      // Step 2: Get Google OAuth token via Chrome Identity API with openid scope
       const token = await chrome.identity.getAuthToken({
         interactive: true,
         scopes: [
+          'openid',
           'https://www.googleapis.com/auth/userinfo.email',
           'https://www.googleapis.com/auth/userinfo.profile'
         ]
@@ -37,7 +38,7 @@ window.firebaseAuth = {
       
       console.log('Got Google token, signing into Firebase...');
       
-      // Step 3: Create Firebase credential with the Google token
+      // Step 3: Create Firebase credential with the Google token (should work now!)
       const credential = firebase.auth.GoogleAuthProvider.credential(null, token);
       
       // Step 4: Sign in to Firebase with the credential
@@ -49,7 +50,7 @@ window.firebaseAuth = {
       // Step 5: Get Firebase ID token
       const firebaseToken = await user.getIdToken();
       
-      // Step 6: Call your API with the Firebase token
+      // Step 6: Call your existing API with the Firebase token
       console.log('Calling Eigenarc API...');
       const response = await fetch('https://eigenarc.com/api/auth/firebase', {
         method: 'POST',

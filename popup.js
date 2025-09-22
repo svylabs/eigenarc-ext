@@ -162,13 +162,18 @@ function switchTab(tabName, element) {
   });
   element.classList.add('active');
   
-  // Show/hide tab content
+  // Hide all tab panels
+  document.getElementById('currentPlanTab').classList.add('hidden');
+  document.getElementById('createPlanTab').classList.add('hidden');
+  document.getElementById('examplesTab').classList.add('hidden');
+  
+  // Show selected tab content
   if (tabName === 'currentPlan') {
     document.getElementById('currentPlanTab').classList.remove('hidden');
-    document.getElementById('createPlanTab').classList.add('hidden');
   } else if (tabName === 'createPlan') {
-    document.getElementById('currentPlanTab').classList.add('hidden');
     document.getElementById('createPlanTab').classList.remove('hidden');
+  } else if (tabName === 'examples') {
+    document.getElementById('examplesTab').classList.remove('hidden');
   }
 }
 
@@ -306,13 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach event listeners
   document.getElementById('beginLearningBtn').addEventListener('click', () => {
     console.log('Begin Learning clicked');
-    showScreen('chatScreen');
+    showScreen('homeScreen');
   });
   
-  document.getElementById('tryWithoutSigninBtn').addEventListener('click', () => {
-    console.log('Try without signin clicked');
-    showScreen('guestHomeScreen');
-  });
+  // Remove try without signin functionality - no longer needed
   
   document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
   document.getElementById('signinBtn').addEventListener('click', signInWithFirebase);
@@ -332,6 +334,27 @@ document.addEventListener('DOMContentLoaded', () => {
       switchTab(tabName, e.target);
     });
   });
+
+  // Add examples navigation links
+  const checkExamplesLink = document.getElementById('checkExamplesLink');
+  if (checkExamplesLink) {
+    checkExamplesLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Switch to examples tab
+      const examplesTabBtn = document.getElementById('examplesTabBtn');
+      switchTab('examples', examplesTabBtn);
+    });
+  }
+
+  const chatPageLink = document.getElementById('chatPageLink');
+  if (chatPageLink) {
+    chatPageLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Switch to examples tab
+      const examplesTabBtn = document.getElementById('examplesTabBtn');
+      switchTab('examples', examplesTabBtn);
+    });
+  }
   
   // Check if user is already logged in (from storage)
   chrome.storage.local.get(['currentUser'], (result) => {

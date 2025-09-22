@@ -533,9 +533,6 @@
         <button class="start-btn" id="beginLearningBtn">
           Begin Learning
         </button>
-        <button class="try-without-signin-btn" id="tryWithoutSigninBtn">
-          Try without signing in
-        </button>
       </div>
     </div>
   </div>
@@ -611,26 +608,20 @@
     </div>
     <div class="screen-content">
       <div class="tabs">
-        <button class="tab active" id="currentPlanTabBtn" data-tab="currentPlan">Current Plan</button>
+        <button class="tab active" id="currentPlanTabBtn" data-tab="currentPlan">My Pathways</button>
         <button class="tab" id="createPlanTabBtn" data-tab="createPlan">Create Plan</button>
+        <button class="tab" id="examplesTabBtn" data-tab="examples">Examples</button>
       </div>
       <div class="tab-content">
-        <!-- Current Plan Tab -->
+        <!-- My Pathways Tab -->
         <div id="currentPlanTab" class="tab-panel">
-        <div class="plan-selector">
-          <select class="plan-dropdown" id="planDropdown">
-            <option value="fullstack">Full-Stack Web Development</option>
-            <option value="datascience">Data Science Fundamentals</option>
-            <option value="mobile">Mobile App Development</option>
-          </select>
+          <div class="no-pathways-message">
+            <p style="text-align: center; color: #666; margin: 40px 0;">
+              No pathways yet.<br>
+              <a href="#" id="checkExamplesLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Check examples</a> or create your first learning plan.
+            </p>
+          </div>
         </div>
-        
-        <table class="lessons-table">
-          <tbody id="lessonsTableBody">
-            <!-- Lessons will be populated here -->
-          </tbody>
-        </table>
-      </div>
 
       <!-- Create Plan Tab -->
       <div id="createPlanTab" class="tab-panel hidden">
@@ -638,6 +629,8 @@
           <div class="chat-messages" id="createPlanMessages">
             <div class="message ai">
               Let's create a new learning plan! What would you like to learn next?
+              <br><br>
+              <a href="#" id="chatPageLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Need inspiration? Check example learning plans →</a>
             </div>
           </div>
           <div class="chat-input-container">
@@ -646,6 +639,41 @@
               id="createPlanInput" 
               placeholder="Describe your new learning goal..."></textarea>
             <button class="send-btn" id="sendCreatePlanBtn">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Examples Tab -->
+      <div id="examplesTab" class="tab-panel hidden">
+        <div class="examples-content">
+          <h3 style="margin-bottom: 20px; color: hsl(142, 35%, 42%);">Example Learning Plans</h3>
+          <div class="guest-plans">
+            <div class="guest-plan-card" data-plan="fullstack">
+              <div class="plan-card-header">
+                <h4>Full-Stack Web Development</h4>
+                <span class="plan-duration">12 weeks</span>
+              </div>
+              <p>Master HTML, CSS, JavaScript, React, and Node.js</p>
+              <button class="guest-plan-btn">View Learning Path</button>
+            </div>
+            
+            <div class="guest-plan-card" data-plan="datascience">
+              <div class="plan-card-header">
+                <h4>Data Science Fundamentals</h4>
+                <span class="plan-duration">10 weeks</span>
+              </div>
+              <p>Python, statistics, data analysis, and machine learning</p>
+              <button class="guest-plan-btn">View Learning Path</button>
+            </div>
+            
+            <div class="guest-plan-card" data-plan="mobile">
+              <div class="plan-card-header">
+                <h4>Mobile App Development</h4>
+                <span class="plan-duration">8 weeks</span>
+              </div>
+              <p>Build iOS and Android apps with React Native</p>
+              <button class="guest-plan-btn">View Learning Path</button>
+            </div>
           </div>
         </div>
       </div>
