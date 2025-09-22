@@ -826,35 +826,11 @@ function showCourseDetail(course) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position after content is loaded and add scroll tracking
+  // Restore scroll position after content is loaded
   setTimeout(() => {
-    const courseDetailView = document.getElementById('courseDetailView');
-    if (courseDetailView) {
-      console.log('Course detail view found:', courseDetailView);
-      console.log('Scroll height:', courseDetailView.scrollHeight, 'Client height:', courseDetailView.clientHeight);
-      console.log('Current styles:', window.getComputedStyle(courseDetailView).overflow, window.getComputedStyle(courseDetailView).height);
-      
-      // Test scroll functionality
-      console.log('Adding scroll listener to courseDetailView');
-      courseDetailView.addEventListener('scroll', (e) => {
-        console.log('SCROLL EVENT DETECTED! Position:', e.target.scrollTop);
-        clearTimeout(window.globalScrollTimeout);
-        window.globalScrollTimeout = setTimeout(() => {
-          console.log('Course detail scroll detected at position:', e.target.scrollTop);
-          saveScrollPosition();
-        }, 250);
-      });
-      
-      // Only restore scroll position if we have a saved position and it's the same course
-      const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
-      console.log('Restoring course detail scroll position:', savedPosition);
-      if (savedPosition > 0) {
-        courseDetailView.scrollTop = savedPosition;
-      }
-    } else {
-      console.error('courseDetailView element not found!');
-    }
-  }, 600);
+    console.log('Course detail view loaded, restoring scroll position');
+    restoreScrollPosition();
+  }, 300);
 }
 
 // Function to go back to pathways list
@@ -929,31 +905,10 @@ function saveViewState() {
 }
 
 function getScrollableElement() {
-  const currentView = currentViewState.view;
-  
-  if (currentView === 'courseDetail') {
-    // Course detail view has its own scrollable container
-    const courseDetailView = document.getElementById('courseDetailView');
-    if (courseDetailView && courseDetailView.style.display !== 'none') {
-      console.log('Using courseDetailView as scrollable element, scrollHeight:', courseDetailView.scrollHeight, 'clientHeight:', courseDetailView.clientHeight);
-      return courseDetailView;
-    }
-  }
-  
-  // For pathways list and other views, use .tab-content
-  const tabContent = document.querySelector('.tab-content');
-  if (tabContent) {
-    console.log('Using tab-content as scrollable element, scrollHeight:', tabContent.scrollHeight, 'clientHeight:', tabContent.clientHeight);
-    return tabContent;
-  }
-  
-  // Fallback to other containers
-  const homeScreen = document.getElementById('homeScreen');
-  if (homeScreen && homeScreen.scrollHeight > homeScreen.clientHeight) {
-    return homeScreen;
-  }
-  
-  return document.documentElement || document.body;
+  // Always use the main tab-content container for scrolling
+  const mainContainer = document.querySelector('.tab-content');
+  console.log('Using main tab-content as scrollable element for view:', currentViewState.view);
+  return mainContainer;
 }
 
 function saveScrollPosition() {
@@ -975,7 +930,14 @@ function restoreScrollPosition() {
     const scrollPosition = currentViewState.scrollPositions[currentView] || 0;
     
     console.log(`Restoring scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
-    scrollableElement.scrollTop = scrollPosition;
+    
+    // Only restore if we have a meaningful position to restore
+    if (scrollPosition > 0) {
+      scrollableElement.scrollTop = scrollPosition;
+    } else {
+      // Reset to top for new views or when no position saved
+      scrollableElement.scrollTop = 0;
+    }
     
     // Verify the scroll was applied
     setTimeout(() => {
