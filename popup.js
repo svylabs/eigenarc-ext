@@ -418,6 +418,8 @@ async function updateMyPathwaysView() {
   if (!currentUser || (!currentUser.uid && !currentUser.email)) {
     console.log('No user signed in, showing signin view');
     console.log('currentUser object:', currentUser);
+    // Clear any stale cache when not signed in
+    clearCoursesCache();
     if (signinView) signinView.style.display = 'block';
     return;
   }
@@ -1275,7 +1277,16 @@ function loadCoursesFromCache() {
     
     // Check if cache is for current user (use uid or email as fallback)
     const currentUserId = currentUser ? (currentUser.uid || currentUser.email) : null;
-    if (currentUser && parsed.userId !== currentUserId) {
+    
+    // If no user is signed in, clear any existing cache
+    if (!currentUser) {
+      console.log('No user signed in, clearing any existing cache');
+      localStorage.removeItem('eigenarc_courses_cache');
+      return null;
+    }
+    
+    // If cache is for different user, remove it
+    if (parsed.userId !== currentUserId) {
       console.log('Courses cache is for different user, removing');
       localStorage.removeItem('eigenarc_courses_cache');
       return null;
