@@ -827,18 +827,39 @@ function showCourseDetail(course) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position after content is fully loaded
-  setTimeout(() => {
-    console.log('Course detail content rendered, attempting restore...');
+  // Restore scroll position with multiple attempts
+  const restoreWithRetry = (attempts = 0) => {
+    const maxAttempts = 5;
     const scrollableElement = getScrollableElement();
     const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
-    console.log('Restoring courseDetail to position:', savedPosition, 'Element height:', scrollableElement.scrollHeight);
+    
+    console.log(`Course detail restore attempt ${attempts + 1}/${maxAttempts}`);
+    console.log('Element scrollable?', scrollableElement.scrollHeight > scrollableElement.clientHeight);
+    console.log('Element dimensions - scrollHeight:', scrollableElement.scrollHeight, 'clientHeight:', scrollableElement.clientHeight);
+    console.log('Saved position:', savedPosition, 'Current position:', scrollableElement.scrollTop);
     
     if (savedPosition > 0) {
       scrollableElement.scrollTop = savedPosition;
-      console.log('Set scrollTop to:', savedPosition, 'Actual position:', scrollableElement.scrollTop);
+      
+      // Check if restoration worked
+      const actualPosition = scrollableElement.scrollTop;
+      console.log('After setting - Expected:', savedPosition, 'Actual:', actualPosition);
+      
+      // If restoration failed and we have more attempts
+      if (Math.abs(actualPosition - savedPosition) > 10 && attempts < maxAttempts - 1) {
+        console.log('Restoration failed, retrying in 200ms...');
+        setTimeout(() => restoreWithRetry(attempts + 1), 200);
+      } else if (Math.abs(actualPosition - savedPosition) <= 10) {
+        console.log('✅ Course detail scroll restoration successful!');
+      } else {
+        console.log('❌ Course detail scroll restoration failed after all attempts');
+      }
     }
-  }, 800); // Longer timeout to ensure content is fully rendered
+  };
+  
+  // Start restoration attempts
+  setTimeout(() => restoreWithRetry(), 500);
+  setTimeout(() => restoreWithRetry(), 1000); // Backup attempt
 }
 
 // Function to go back to pathways list
