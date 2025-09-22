@@ -355,8 +355,9 @@ async function updateMyPathwaysView() {
   });
   
   // Check if user is actually signed in
-  if (!currentUser || !currentUser.uid) {
+  if (!currentUser || (!currentUser.uid && !currentUser.email)) {
     console.log('No user signed in, showing signin view');
+    console.log('currentUser object:', currentUser);
     if (signinView) signinView.style.display = 'block';
     return;
   }
@@ -619,7 +620,7 @@ function saveCoursesToCache(courses) {
     const cacheData = {
       courses: courses,
       timestamp: Date.now(),
-      userId: currentUser ? currentUser.uid : 'unknown'
+      userId: currentUser ? (currentUser.uid || currentUser.email) : 'unknown'
     };
     localStorage.setItem('eigenarc_courses_cache', JSON.stringify(cacheData));
     console.log('Courses cached successfully:', courses.length, 'courses');
@@ -646,8 +647,9 @@ function loadCoursesFromCache() {
       return null;
     }
     
-    // Check if cache is for current user
-    if (currentUser && parsed.userId !== currentUser.uid) {
+    // Check if cache is for current user (use uid or email as fallback)
+    const currentUserId = currentUser ? (currentUser.uid || currentUser.email) : null;
+    if (currentUser && parsed.userId !== currentUserId) {
       console.log('Courses cache is for different user, removing');
       localStorage.removeItem('eigenarc_courses_cache');
       return null;
