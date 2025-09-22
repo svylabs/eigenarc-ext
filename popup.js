@@ -670,12 +670,12 @@ function showCourseDetail(course) {
   currentViewState.courseId = course.id;
   console.log('*** VIEW CHANGED TO courseDetail for course:', course.id);
   
-  // Only reset scroll position if this is a different course
-  if (isDifferentCourse || !previousCourseId) {
-    console.log('Opening different course, resetting scroll position. Previous:', previousCourseId, 'New:', course.id);
+  // Only reset scroll position if this is a genuine different course (not during initial restore)
+  if (previousCourseId && previousCourseId !== course.id) {
+    console.log('🔄 Opening different course, resetting scroll position. Previous:', previousCourseId, 'New:', course.id);
     currentViewState.scrollPositions.courseDetail = 0;
   } else {
-    console.log('Same course, keeping existing scroll position:', currentViewState.scrollPositions.courseDetail);
+    console.log('📍 Same course or initial load, preserving scroll position:', currentViewState.scrollPositions.courseDetail);
   }
   
   // Save state to storage
