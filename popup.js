@@ -765,7 +765,7 @@ function showCourseDetail(course, save=true) {
                       const completedAt = taskProgress && taskProgress.completedAt ? new Date(taskProgress.completedAt).toLocaleDateString() : null;
                       
                       return `
-                        <div style="
+                        <div class="clickable-task" style="
                           display: flex; 
                           align-items: flex-start; 
                           gap: 8px; 
@@ -774,7 +774,12 @@ function showCourseDetail(course, save=true) {
                           border: 1px solid ${isCompleted ? '#28a745' : '#e9ecef'}; 
                           border-radius: 6px;
                           font-size: 12px;
-                        ">
+                          cursor: pointer;
+                          transition: all 0.2s ease;
+                        " 
+                        onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#007bff'" 
+                        onmouseout="this.style.background='${isCompleted ? '#f8f9fa' : '#fff'}'; this.style.borderColor='${isCompleted ? '#28a745' : '#e9ecef'}'" 
+                        onclick="injectTaskPrompt('${course.title.replace(/'/g, "\\'").replace(/"/g, '\\"')}', '${course.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'No description available'}', '${phase.title?.replace(/'/g, "\\'").replace(/"/g, '\\"') || `Phase ${phaseIndex + 1}`}', '${phase.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || ''}', '${task.replace(/'/g, "\\'").replace(/"/g, '\\"')}', '${phase.duration || ''}')">
                           <span style="
                             width: 16px; 
                             height: 16px; 
@@ -791,6 +796,7 @@ function showCourseDetail(course, save=true) {
                           <div style="flex: 1; line-height: 1.4;">
                             <div style="color: ${isCompleted ? '#28a745' : '#333'};">${task}</div>
                             ${completedAt ? `<div style="font-size: 10px; color: #888; margin-top: 2px;">Completed: ${completedAt}</div>` : ''}
+                            <div style="font-size: 10px; color: #007bff; margin-top: 2px; opacity: 0.8;">💡 Click to generate learning materials</div>
                           </div>
                         </div>
                       `;
@@ -829,39 +835,70 @@ function showCourseDetail(course, save=true) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position with multiple attempts
-  const restoreWithRetry = (attempts = 0) => {
-    const maxAttempts = 5;
-    const scrollableElement = getScrollableElement();
-    const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
-    
-    console.log(`Course detail restore attempt ${attempts + 1}/${maxAttempts}`);
-    console.log('Element scrollable?', scrollableElement.scrollHeight > scrollableElement.clientHeight);
-    console.log('Element dimensions - scrollHeight:', scrollableElement.scrollHeight, 'clientHeight:', scrollableElement.clientHeight);
-    console.log('Saved position:', savedPosition, 'Current position:', scrollableElement.scrollTop);
-    
-    if (savedPosition > 0) {
-      scrollableElement.scrollTop = savedPosition;
-      
-      // Check if restoration worked
-      const actualPosition = scrollableElement.scrollTop;
-      console.log('After setting - Expected:', savedPosition, 'Actual:', actualPosition);
-      
-      // If restoration failed and we have more attempts
-      if (Math.abs(actualPosition - savedPosition) > 10 && attempts < maxAttempts - 1) {
-        console.log('Restoration failed, retrying in 200ms...');
-        setTimeout(() => restoreWithRetry(attempts + 1), 200);
-      } else if (Math.abs(actualPosition - savedPosition) <= 10) {
-        console.log('✅ Course detail scroll restoration successful!');
-      } else {
-        console.log('❌ Course detail scroll restoration failed after all attempts');
-      }
-    }
-  };
+}
+
+// Function to inject task-specific prompt into ChatGPT
+function injectTaskPrompt(courseTitle, courseDescription, phaseTitle, phaseDescription, taskTitle, phaseDuration) {
+  const prompt = `You are an educational content expert. Create detailed learning materials in for a specific lesson within a learning course.
+Generate comprehensive content that includes:
+1. A detailed overview explaining what this task teaches
+2. Key learning points as a bulleted list
+3. Detailed description with any algorithms / equations / illustrations / calculations etc.
+4. Practice exercises as a numbered list
+5. Estimated time to complete
+IMPORTANT: 
+- For technical subjects (mathematics, physics, chemistry, engineering, etc.), use inline LaTeX like $E = mc^2$ or block LaTeX like $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
+- For non-technical subjects (arts, music, literature, history, etc.), DO NOT include equations
+- Make content educational, specific, and actionable
+
+Create detailed learning content for this task:
+
+Course: ${courseTitle}
+Course Description: ${courseDescription}
+Phase: ${phaseTitle}${phaseDescription ? ` (${phaseDescription})` : ''}
+Task: ${taskTitle}
+Phase Duration: ${phaseDuration}
+
+Generate the learning materials following the system instructions.`;
+
+  console.log('🎯 Injecting task prompt into ChatGPT:', prompt);
   
-  // Start restoration attempts
-  setTimeout(() => restoreWithRetry(), 500);
-  setTimeout(() => restoreWithRetry(), 1000); // Backup attempt
+  // Query all ChatGPT tabs and inject the prompt
+  chrome.tabs.query({ url: "*://chatgpt.com/*" }, (tabs) => {
+    if (tabs.length > 0) {
+      console.log(`Found ${tabs.length} ChatGPT tab(s), injecting prompt...`);
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'injectPrompt',
+          prompt: prompt
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('Could not inject into tab:', chrome.runtime.lastError.message);
+          } else {
+            console.log('✅ Prompt injected successfully into ChatGPT tab');
+          }
+        });
+      });
+    } else {
+      console.log('No ChatGPT tabs found, opening new tab...');
+      chrome.tabs.create({ url: 'https://chatgpt.com/' }, (newTab) => {
+        console.log('Created new ChatGPT tab, waiting for load...');
+        // Wait for tab to load before injecting
+        setTimeout(() => {
+          chrome.tabs.sendMessage(newTab.id, {
+            action: 'injectPrompt',
+            prompt: prompt
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.log('Could not inject into new tab:', chrome.runtime.lastError.message);
+            } else {
+              console.log('✅ Prompt injected successfully into new ChatGPT tab');
+            }
+          });
+        }, 3000);
+      });
+    }
+  });
 }
 
 // Function to go back to pathways list
