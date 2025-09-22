@@ -665,6 +665,11 @@ function showCourseDetail(course) {
   const previousCourseId = currentViewState.courseId;
   const isDifferentCourse = previousCourseId !== course.id;
   
+  console.log('🎯 showCourseDetails called with course:', course.id);
+  console.log('🎯 Previous courseId:', previousCourseId);
+  console.log('🎯 Is different course?', isDifferentCourse);
+  console.log('🎯 Current scroll position before logic:', currentViewState.scrollPositions.courseDetail);
+  
   // Update view state
   currentViewState.view = 'courseDetail';
   currentViewState.courseId = course.id;
@@ -674,8 +679,10 @@ function showCourseDetail(course) {
   if (previousCourseId && previousCourseId !== course.id) {
     console.log('🔄 Opening different course, resetting scroll position. Previous:', previousCourseId, 'New:', course.id);
     currentViewState.scrollPositions.courseDetail = 0;
+    console.log('🔄 RESET courseDetail to:', currentViewState.scrollPositions.courseDetail);
   } else {
     console.log('📍 Same course or initial load, preserving scroll position:', currentViewState.scrollPositions.courseDetail);
+    console.log('📍 Condition check: previousCourseId exists?', !!previousCourseId, 'IDs different?', previousCourseId !== course.id);
   }
   
   // Save state to storage
@@ -827,39 +834,6 @@ function showCourseDetail(course) {
     ${phasesHtml}
   `;
   
-  // Restore scroll position with multiple attempts
-  const restoreWithRetry = (attempts = 0) => {
-    const maxAttempts = 5;
-    const scrollableElement = getScrollableElement();
-    const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
-    
-    console.log(`Course detail restore attempt ${attempts + 1}/${maxAttempts}`);
-    console.log('Element scrollable?', scrollableElement.scrollHeight > scrollableElement.clientHeight);
-    console.log('Element dimensions - scrollHeight:', scrollableElement.scrollHeight, 'clientHeight:', scrollableElement.clientHeight);
-    console.log('Saved position:', savedPosition, 'Current position:', scrollableElement.scrollTop);
-    
-    if (savedPosition > 0) {
-      scrollableElement.scrollTop = savedPosition;
-      
-      // Check if restoration worked
-      const actualPosition = scrollableElement.scrollTop;
-      console.log('After setting - Expected:', savedPosition, 'Actual:', actualPosition);
-      
-      // If restoration failed and we have more attempts
-      if (Math.abs(actualPosition - savedPosition) > 10 && attempts < maxAttempts - 1) {
-        console.log('Restoration failed, retrying in 200ms...');
-        setTimeout(() => restoreWithRetry(attempts + 1), 200);
-      } else if (Math.abs(actualPosition - savedPosition) <= 10) {
-        console.log('✅ Course detail scroll restoration successful!');
-      } else {
-        console.log('❌ Course detail scroll restoration failed after all attempts');
-      }
-    }
-  };
-  
-  // Start restoration attempts
-  setTimeout(() => restoreWithRetry(), 500);
-  setTimeout(() => restoreWithRetry(), 1000); // Backup attempt
 }
 
 // Function to go back to pathways list
@@ -949,7 +923,12 @@ function saveScrollPosition() {
   // Save scroll position for the current view
   currentViewState.scrollPositions[currentView] = scrollPosition;
   console.log(`*** SAVING scroll position for ${currentView}:`, scrollPosition, 'on element:', scrollableElement.tagName, scrollableElement.id || scrollableElement.className);
-  console.log('Current view state:', currentViewState.view, 'Course ID:', currentViewState.courseId);
+  console.log('📝 SAVE: Current view state:', currentViewState.view, 'Course ID:', currentViewState.courseId);
+  console.log('📝 SAVE: Full currentViewState being saved:', {
+    view: currentViewState.view,
+    courseId: currentViewState.courseId,
+    scrollPositions: currentViewState.scrollPositions
+  });
   console.log('Updated scroll positions:', currentViewState.scrollPositions);
   saveViewState();
 }
@@ -984,6 +963,7 @@ async function restoreViewState() {
     
     if (result.currentViewState) {
       console.log('📥 Raw persisted state loaded:', result.currentViewState);
+      console.log('📥 RESTORE: Persisted course ID:', result.currentViewState.courseId);
       console.log('📍 Raw scroll positions:', result.currentViewState.scrollPositions);
       
       // Merge with current state to ensure we have the scrollPositions structure
@@ -1004,14 +984,18 @@ async function restoreViewState() {
       console.log('🔧 Preserved courseDetail:', preservedCourseDetail);
       console.log('🔧 Preserved pathwaysList:', preservedPathwaysList);
       
-      currentViewState = {
-        ...currentViewState,
-        ...result.currentViewState,
-        scrollPositions: {
-          pathwaysList: preservedPathwaysList,
-          courseDetail: preservedCourseDetail
-        }
+      // Direct assignment to avoid spread operator conflicts
+      currentViewState.view = result.currentViewState.view;
+      currentViewState.courseId = result.currentViewState.courseId;
+      currentViewState.scrollPosition = result.currentViewState.scrollPosition || 0;
+      
+      // Explicitly set scroll positions to avoid initial defaults
+      currentViewState.scrollPositions = {
+        pathwaysList: preservedPathwaysList,
+        courseDetail: preservedCourseDetail
       };
+      
+      console.log('🔧 Direct assignment complete. Final scrollPositions:', currentViewState.scrollPositions);
       
       console.log('🔧 After merge - scroll positions should be:', currentViewState.scrollPositions);
       
@@ -1026,12 +1010,8 @@ async function restoreViewState() {
         console.log('   - scrollPositions:', currentViewState.scrollPositions);
       }
       
-      // DEBUG: Check if scroll positions are being modified
-      console.log('🔍 Pre-final check scroll positions:', currentViewState.scrollPositions);
-      console.log('🔍 courseDetail value specifically:', currentViewState.scrollPositions.courseDetail);
-      console.log('🔍 Object keys:', Object.keys(currentViewState.scrollPositions));
-      
-      console.log('📍 Final scroll positions:', currentViewState.scrollPositions);
+      console.log('✅ State restoration complete');
+      console.log('📍 Final scroll positions:', JSON.stringify(currentViewState.scrollPositions));
       console.log('🎯 Restored view:', currentViewState.view);
       console.log('📚 Restored course ID:', currentViewState.courseId);
       
@@ -1818,16 +1798,42 @@ document.addEventListener('DOMContentLoaded', () => {
       currentTab = result.currentTab || 'examples';
     }
     
-    // Restore screen - default to homeScreen if user is logged in, otherwise welcomeScreen
+    // Always show welcome screen first, then restore after 1 second
+    showScreen('welcomeScreen');
+    
+    // Determine the target screen to restore to after 1 second
     const savedScreen = result.currentScreen;
+    let targetScreen;
     if (savedScreen && (savedScreen !== 'welcomeScreen' || currentUser)) {
-      currentScreen = savedScreen;
-      showScreen(savedScreen);
+      targetScreen = savedScreen;
     } else if (currentUser) {
-      showScreen('homeScreen');
+      targetScreen = 'homeScreen';
     } else {
-      showScreen('welcomeScreen');
+      targetScreen = 'welcomeScreen';
     }
+    
+    // After 1 second, switch to the target screen and restore scroll position
+    setTimeout(() => {
+      if (targetScreen !== 'welcomeScreen') {
+        console.log('🔄 Switching from welcome to target screen:', targetScreen);
+        showScreen(targetScreen);
+        
+        // If restoring to course detail view, restore scroll position
+        if (currentViewState.view === 'courseDetail' && currentViewState.courseId) {
+          setTimeout(() => {
+            const scrollableElement = getScrollableElement();
+            const savedPosition = currentViewState.scrollPositions.courseDetail || 0;
+            
+            console.log('🎯 Restoring course detail scroll to position:', savedPosition);
+            
+            if (savedPosition > 0) {
+              scrollableElement.scrollTop = savedPosition;
+              console.log('✅ Scroll position applied');
+            }
+          }, 200);
+        }
+      }
+    }, 1000);
   });
 });
 
