@@ -2115,19 +2115,25 @@ window.signOutUser = async function() {
       // Reset current user
       currentUser = null;
       
-      // Clear current view state
+      // Clear ALL localStorage data on signout
+      await chrome.storage.local.clear();
+      
+      // Reset current view state
       currentViewState = {
         view: 'pathwaysList',
         courseId: null,
         scrollPosition: 0
       };
       
+      // Reset conversation state
+      currentConversationId = null;
+      generatedPlanId = null;
+      
       // Force tab to examples for guest experience
       currentTab = 'examples';
-      chrome.storage.local.set({ currentTab: 'examples' });
       
-      // Refresh the UI to show signed out state
-      showScreen('homeScreen');
+      // Refresh the UI to show signed out state (go to welcome screen)
+      showScreen('welcomeScreen');
       
       console.log('User signed out successfully');
       return true;
@@ -2847,14 +2853,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('User not signed in, currentTab forced to examples');
     }
     
-    // Restore screen - default to homeScreen if user is logged in, otherwise welcomeScreen
-    const savedScreen = result.currentScreen;
-    if (savedScreen && (savedScreen !== 'welcomeScreen' || currentUser)) {
-      currentScreen = savedScreen;
-      showScreen(savedScreen);
-    } else if (currentUser) {
-      showScreen('homeScreen');
+    // Restore screen - always show welcomeScreen for non-signed-in users
+    if (currentUser) {
+      // User is signed in: restore saved screen or default to homeScreen
+      const savedScreen = result.currentScreen;
+      if (savedScreen && savedScreen !== 'welcomeScreen') {
+        currentScreen = savedScreen;
+        showScreen(savedScreen);
+      } else {
+        showScreen('homeScreen');
+      }
     } else {
+      // User is not signed in: always show welcomeScreen first
       showScreen('welcomeScreen');
     }
   });
