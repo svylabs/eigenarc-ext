@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Eigenarc",
-  "version": "0.3",
+  "version": "0.4",
   "description": "Structured learning for Native AI Learners",
   "host_permissions": [
     "https://chat.openai.com/*",
