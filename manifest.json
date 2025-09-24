@@ -21,6 +21,7 @@
   "background": {
     "service_worker": "background.js"
   },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo603HNhs1xw2/zbmGYUm2Vn9RNFMBd4kQFdVRkbwo+zkeL26VDWmkSOk/sngAXpRnAVwaQxSwN7SQtkVuQ0dDDYvKExXEUECqWMhKEpDfAEuxs/5dJ4/eZNXrNV6lqwsmaGfgEMH205cWfuvTGYf935bTwH/QWk/wn7EkE4PtYVsAfilUKby9/GUWO9bEAPQ2tR5ffQawQzb/jxxWc82prTrRjUX8ObQ1LLOEAQ7gUgtDGzW9rZU1uUA9Lzj8dUvwQEEib7OU6fB9Wae1quWLZ8yoLBLKXaNf2j/R5xa8YgLDkPWFUMemH7MDBLdrhXPkuU6Vhe4zm6PoIA+YkheawIDAQAB",
   "content_scripts": [
     {
       "matches": ["https://chat.openai.com/*", "https://chatgpt.com/*"],
