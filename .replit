@@ -28,7 +28,3 @@ outputType = "console"
 
 [nix]
 channel = "stable-25_05"
-
-[[ports]]
-localPort = 44665
-externalPort = 80

@@ -333,12 +333,15 @@ async function handleFormPlanCreation(formData) {
     const planContainer = document.createElement('div');
     planContainer.style.padding = '20px';
     
-    const planPreview = createPlanPreview(plan, false); // false = not main chat
+    const planPreview = createPlanPreviewElement(plan, false); // false = not main chat
     planContainer.appendChild(planPreview);
     
     resultContainer.appendChild(planContainer);
     
     console.log('Plan generated successfully:', plan.id);
+    
+    // Save form data for future use
+    await saveFormData(formData);
     
   } catch (error) {
     console.error('Error generating plan from form:', error);
@@ -352,6 +355,65 @@ async function handleFormPlanCreation(formData) {
     // Re-enable form
     generateBtn.disabled = false;
     generateBtn.textContent = originalBtnText;
+  }
+}
+
+// Form data persistence functions
+async function saveFormData(formData) {
+  try {
+    await chrome.storage.local.set({ savedCreatePlanFormData: formData });
+    console.log('Form data saved successfully');
+  } catch (error) {
+    console.error('Error saving form data:', error);
+  }
+}
+
+async function loadFormData() {
+  try {
+    const result = await chrome.storage.local.get(['savedCreatePlanFormData']);
+    return result.savedCreatePlanFormData || null;
+  } catch (error) {
+    console.error('Error loading form data:', error);
+    return null;
+  }
+}
+
+async function restoreFormData() {
+  const savedData = await loadFormData();
+  if (!savedData) return;
+  
+  // Restore form field values
+  const subjectField = document.getElementById('planSubject');
+  const skillLevelField = document.getElementById('planSkillLevel');
+  const durationField = document.getElementById('planDuration');
+  const timeCommitmentField = document.getElementById('planTimeCommitment');
+  const goalsField = document.getElementById('planGoals');
+  
+  if (subjectField && savedData.subject) {
+    subjectField.value = savedData.subject;
+  }
+  if (skillLevelField && savedData.skillLevel) {
+    skillLevelField.value = savedData.skillLevel;
+  }
+  if (durationField && savedData.duration) {
+    durationField.value = savedData.duration;
+  }
+  if (timeCommitmentField && savedData.timeCommitment) {
+    timeCommitmentField.value = savedData.timeCommitment;
+  }
+  if (goalsField && savedData.goals) {
+    goalsField.value = savedData.goals;
+  }
+  
+  console.log('Form data restored successfully');
+}
+
+async function clearSavedFormData() {
+  try {
+    await chrome.storage.local.remove(['savedCreatePlanFormData']);
+    console.log('Saved form data cleared');
+  } catch (error) {
+    console.error('Error clearing saved form data:', error);
   }
 }
 
@@ -2600,6 +2662,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Handle plan creation
       await handleFormPlanCreation(formData);
     });
+    
+    // Restore saved form data on form load
+    setTimeout(async () => {
+      await restoreFormData();
+    }, 200);
   }
   
   // New conversation button (only for main chat)
