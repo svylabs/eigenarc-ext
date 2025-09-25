@@ -288,65 +288,70 @@ async function sendChatMessage() {
   }
 }
 
-async function sendCreatePlanMessage() {
-  const input = document.getElementById('createPlanInput');
-  const message = input.value.trim();
-  
-  if (!message) return;
-  
-  // Disable input and button during API call
-  input.disabled = true;
-  const sendBtn = document.getElementById('sendCreatePlanBtn');
-  sendBtn.disabled = true;
-  sendBtn.textContent = 'Sending...';
-  
-  // Add user message to chat
-  addMessageToChat('user', message, 'createPlanMessages');
-  input.value = '';
+async function handleFormPlanCreation(formData) {
+  const resultContainer = document.getElementById('planGenerationResult');
+  const generateBtn = document.getElementById('generatePlanBtn');
+  const originalBtnText = generateBtn.textContent;
   
   try {
-    // Create conversation if not exists
-    if (!currentConversationId) {
-      await createConversation("Learning Plan Creation");
-    }
+    // Disable form and show loading
+    generateBtn.disabled = true;
+    generateBtn.textContent = '⚡ Generating...';
     
-    // Send message and get AI response
-    const result = await sendMessage(message);
+    // Show loading message
+    resultContainer.style.display = 'block';
+    resultContainer.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: hsl(142, 35%, 42%);">
+        <div style="font-size: 18px; margin-bottom: 10px;">⚡ Generating your personalized learning plan...</div>
+        <div style="font-size: 14px; color: #666;">This may take a few moments</div>
+      </div>
+    `;
     
-    // Add AI response to chat
-    if (result.aiMessage && result.aiMessage.content) {
-      const aiContent = typeof result.aiMessage.content === 'string' 
-        ? result.aiMessage.content 
-        : result.aiMessage.content.conversationReply || 'I received your message.';
-      
-      addMessageToChat('ai', aiContent, 'createPlanMessages');
-      
-      // Debug logging removed for production
-      
-      // Check if AI can automatically generate a plan
-      if (result.can_generate_plan && result.plan_parameters) {
-        // Auto-generating plan with API-provided parameters
-        setTimeout(async () => {
-          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
-        }, 1000);
-      }
-      // Only auto-generate when API explicitly indicates readiness with proper parameters
-      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion' && result.plan_parameters) {
-        // API suggests plan generation - triggering automatic generation
-        setTimeout(async () => {
-          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
-        }, 1500);
-      }
-    }
+    // Prepare parameters for API call
+    const params = {
+      subject: formData.subject,
+      skillLevel: formData.skillLevel,
+      timeline: formData.duration,  // API expects 'timeline' not 'duration'
+      dailyTime: formData.timeCommitment,
+      goals: formData.goals
+    };
+    
+    console.log('Generating plan with parameters:', params);
+    
+    // Generate the plan directly (no conversation needed)
+    const plan = await generatePlanFromForm(params);
+    
+    // Show success and the generated plan
+    resultContainer.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: hsl(142, 35%, 42%); border-bottom: 1px solid #eee;">
+        <div style="font-size: 18px; margin-bottom: 10px;">🎉 Your learning plan is ready!</div>
+        <div style="font-size: 14px; color: #666;">Here's your personalized learning plan:</div>
+      </div>
+    `;
+    
+    // Display the generated plan
+    const planContainer = document.createElement('div');
+    planContainer.style.padding = '20px';
+    
+    const planPreview = createPlanPreview(plan, false); // false = not main chat
+    planContainer.appendChild(planPreview);
+    
+    resultContainer.appendChild(planContainer);
+    
+    console.log('Plan generated successfully:', plan.id);
     
   } catch (error) {
-    console.error('Error in chat:', error);
-    addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.', 'createPlanMessages');
+    console.error('Error generating plan from form:', error);
+    resultContainer.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #e74c3c;">
+        <div style="font-size: 16px; margin-bottom: 10px;">❌ Error generating plan</div>
+        <div style="font-size: 14px;">Sorry, I encountered an error while generating your plan. Please check your inputs and try again.</div>
+      </div>
+    `;
   } finally {
-    // Re-enable input and button
-    input.disabled = false;
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Send';
+    // Re-enable form
+    generateBtn.disabled = false;
+    generateBtn.textContent = originalBtnText;
   }
 }
 
@@ -1023,6 +1028,32 @@ async function generatePlan(params) {
     return plan;
   } catch (error) {
     console.error('Error generating plan:', error);
+    throw error;
+  }
+}
+
+async function generatePlanFromForm(params) {
+  try {
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch(`${API_BASE_URL}/api/plans/generate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const plan = await response.json();
+    generatedPlanId = plan.id;
+    console.log('Plan generated from form:', plan.id);
+    return plan;
+  } catch (error) {
+    console.error('Error generating plan from form:', error);
     throw error;
   }
 }
@@ -2545,34 +2576,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     signinBtn.addEventListener('click', signInWithFirebase);
   }
   
-  const sendCreatePlanBtn = document.getElementById('sendCreatePlanBtn');
-  if (sendCreatePlanBtn) {
-    sendCreatePlanBtn.addEventListener('click', sendCreatePlanMessage);
+  // Form submission for Create Plan
+  const createPlanForm = document.getElementById('createPlanForm');
+  if (createPlanForm) {
+    createPlanForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Collect form data
+      const formData = {
+        subject: document.getElementById('planSubject').value.trim(),
+        skillLevel: document.getElementById('planSkillLevel').value,
+        duration: document.getElementById('planDuration').value,
+        timeCommitment: document.getElementById('planTimeCommitment').value,
+        goals: document.getElementById('planGoals').value.trim()
+      };
+      
+      // Validate form
+      if (!formData.subject || !formData.skillLevel || !formData.duration || !formData.timeCommitment || !formData.goals) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      // Handle plan creation
+      await handleFormPlanCreation(formData);
+    });
   }
   
-  // New conversation buttons
+  // New conversation button (only for main chat)
   const newConversationBtn = document.getElementById('newConversationBtn');
   if (newConversationBtn) {
     newConversationBtn.addEventListener('click', () => {
       startNewConversation('chatMessages');
-    });
-  }
-  
-  const newCreatePlanConversationBtn = document.getElementById('newCreatePlanConversationBtn');
-  if (newCreatePlanConversationBtn) {
-    newCreatePlanConversationBtn.addEventListener('click', () => {
-      startNewConversation('createPlanMessages');
-    });
-  }
-  
-  // Add keyboard support for chat input
-  const createPlanInput = document.getElementById('createPlanInput');
-  if (createPlanInput) {
-    createPlanInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendCreatePlanMessage();
-      }
     });
   }
   
@@ -2635,6 +2669,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const browseExamplesLink = document.getElementById('browseExamplesLink');
     if (browseExamplesLink) {
       browseExamplesLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const examplesTabBtn = document.getElementById('examplesTabBtn');
+        if (examplesTabBtn) {
+          switchTab('examples', examplesTabBtn);
+        }
+      });
+    }
+
+    const browseExamplesFromForm = document.getElementById('browseExamplesFromForm');
+    if (browseExamplesFromForm) {
+      browseExamplesFromForm.addEventListener('click', (e) => {
         e.preventDefault();
         const examplesTabBtn = document.getElementById('examplesTabBtn');
         if (examplesTabBtn) {
