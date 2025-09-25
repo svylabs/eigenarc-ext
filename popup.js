@@ -1243,8 +1243,11 @@ function switchTab(tabName, element) {
   } else if (tabName === 'createPlan') {
     document.getElementById('createPlanTab').classList.remove('hidden');
     updateCreatePlanView();
-    // Display conversation history for Create Plan tab
-    setTimeout(() => displayConversationHistory('createPlanMessages'), 100);
+    // Restore both form data and conversation history when switching to Create Plan tab
+    setTimeout(async () => {
+      await restoreFormData();
+      displayConversationHistory('createPlanMessages');
+    }, 100);
   } else if (tabName === 'examples') {
     console.log('Switching to examples tab...');
     document.getElementById('examplesTab').classList.remove('hidden');
@@ -2751,6 +2754,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         const examplesTabBtn = document.getElementById('examplesTabBtn');
         if (examplesTabBtn) {
           switchTab('examples', examplesTabBtn);
+        }
+      });
+    }
+
+    const clearFormBtn = document.getElementById('clearFormBtn');
+    if (clearFormBtn) {
+      clearFormBtn.addEventListener('click', async () => {
+        // Clear form fields
+        document.getElementById('planSubject').value = '';
+        document.getElementById('planSkillLevel').value = '';
+        document.getElementById('planDuration').value = '';
+        document.getElementById('planTimeCommitment').value = '';
+        document.getElementById('planGoals').value = '';
+        
+        // Clear saved form data
+        await clearSavedFormData();
+        
+        // Clear result area
+        const resultContainer = document.getElementById('planGenerationResult');
+        if (resultContainer) {
+          resultContainer.style.display = 'none';
+          resultContainer.innerHTML = '';
         }
       });
     }
