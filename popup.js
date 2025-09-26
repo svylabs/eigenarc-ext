@@ -307,9 +307,11 @@ async function handleFormPlanCreation(formData) {
     
     console.log('Creating conversation with form data:', formData);
     
-    // Create the conversation with form data
-    const conversation = await createConversation(title, formData);
+    // Create the conversation with form data (mark as Create Plan conversation)
+    const conversation = await createConversation(title, formData, true);
     currentCreatePlanConversationId = conversation.id;
+    
+    console.log('Create Plan conversation ID set to:', currentCreatePlanConversationId);
     
     // Add confirmation message
     addMessageToChat('ai', '✅ Great! I\'ve created your learning conversation. The AI is now analyzing your preferences and will automatically generate your personalized plan when ready.', 'createPlanMessages');
@@ -413,8 +415,8 @@ async function sendCreatePlanMessage(message) {
     // Add user message to chat
     addMessageToChat('user', message, 'createPlanMessages');
     
-    // Send message to API
-    const result = await sendMessageToConversation(currentCreatePlanConversationId, message);
+    // Send message to API using the Create Plan conversation
+    const result = await sendMessage(message, currentCreatePlanConversationId);
     
     // Add AI response to chat
     if (result.aiMessage && result.aiMessage.content) {
@@ -450,31 +452,6 @@ async function sendCreatePlanMessage(message) {
   }
 }
 
-// Send message to specific conversation
-async function sendMessageToConversation(conversationId, content) {
-  try {
-    const token = await window.firebaseAuth.getValidToken();
-    const response = await fetch(`${API_BASE_URL}/api/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ content })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log('Message sent to conversation:', conversationId);
-    return result;
-  } catch (error) {
-    console.error('Error sending message to conversation:', error);
-    throw error;
-  }
-}
 
 // Form data persistence functions
 async function saveFormData(formData) {
@@ -552,23 +529,28 @@ function addMessageToChat(sender, message, containerId) {
   container.scrollTop = container.scrollHeight;
   
   // Save message to conversation history
-  if (currentConversationId && sender !== 'system') {
-    saveMessageToHistory(sender, message, 'text');
+  if ((currentConversationId || currentCreatePlanConversationId) && sender !== 'system') {
+    // Determine which conversation to save to based on container
+    const conversationId = containerId === 'createPlanMessages' ? currentCreatePlanConversationId : currentConversationId;
+    saveMessageToHistory(sender, message, 'text', null, conversationId);
   }
 }
 
 // Save conversation messages to storage
-async function saveMessageToHistory(sender, message, messageType = 'text', data = null) {
-  if (!currentConversationId) return;
+async function saveMessageToHistory(sender, message, messageType = 'text', data = null, conversationId = null) {
+  // Use provided conversationId or fall back to current main conversation
+  const activeConversationId = conversationId || currentConversationId;
+  
+  if (!activeConversationId) return;
   
   try {
     // Initialize conversation history if not exists
-    if (!conversationHistory[currentConversationId]) {
-      conversationHistory[currentConversationId] = [];
+    if (!conversationHistory[activeConversationId]) {
+      conversationHistory[activeConversationId] = [];
     }
     
     // Add message with timestamp
-    conversationHistory[currentConversationId].push({
+    conversationHistory[activeConversationId].push({
       sender,
       message,
       messageType,
@@ -579,32 +561,39 @@ async function saveMessageToHistory(sender, message, messageType = 'text', data 
     // Save to storage
     await chrome.storage.local.set({ 
       conversationHistory: conversationHistory,
-      lastConversationId: currentConversationId
+      lastConversationId: activeConversationId
     });
     
-    console.log('💾 Message saved to conversation history:', currentConversationId, messageType);
+    console.log('💾 Message saved to conversation history:', activeConversationId, messageType);
   } catch (error) {
     console.error('Error saving message to history:', error);
   }
 }
 
 // Save generated plan to conversation history
-async function savePlanToHistory(plan, containerId) {
+async function savePlanToHistory(plan, containerId, conversationId = null) {
   const message = '🎉 Generated Learning Plan';
+  
+  // Determine which conversation to save to
+  const activeConversationId = conversationId || (containerId === 'createPlanMessages' ? currentCreatePlanConversationId : currentConversationId);
+  
   await saveMessageToHistory('ai', message, 'generated_plan', { 
     planId: plan.id,
     planTitle: plan.title,
     planDescription: plan.description,
     containerId 
-  });
+  }, activeConversationId);
   
   // Also update conversation metadata
-  await saveConversationPlanState(plan.id);
+  await saveConversationPlanState(plan.id, activeConversationId);
 }
 
 // Save conversation plan state
-async function saveConversationPlanState(planId) {
-  if (!currentConversationId) return;
+async function saveConversationPlanState(planId, conversationId = null) {
+  // Use provided conversationId or fall back to current ones
+  const activeConversationId = conversationId || currentCreatePlanConversationId || currentConversationId;
+  
+  if (!activeConversationId) return;
   
   try {
     const conversationMeta = await chrome.storage.local.get('conversationMeta') || {};
@@ -612,14 +601,14 @@ async function saveConversationPlanState(planId) {
       conversationMeta.conversationMeta = {};
     }
     
-    conversationMeta.conversationMeta[currentConversationId] = {
+    conversationMeta.conversationMeta[activeConversationId] = {
       hasGeneratedPlan: true,
       planId: planId,
       generatedAt: new Date().toISOString()
     };
     
     await chrome.storage.local.set(conversationMeta);
-    console.log('💾 Saved plan state for conversation:', currentConversationId, 'Plan ID:', planId);
+    console.log('💾 Saved plan state for conversation:', activeConversationId, 'Plan ID:', planId);
   } catch (error) {
     console.error('Error saving conversation plan state:', error);
   }
@@ -875,7 +864,8 @@ async function handleAutomaticPlanGeneration(planParameters, containerId) {
     }
     
     // Save plan to conversation history
-    await savePlanToHistory(plan, containerId);
+    const conversationId = containerId === 'createPlanMessages' ? currentCreatePlanConversationId : currentConversationId;
+    await savePlanToHistory(plan, containerId, conversationId);
     
   } catch (error) {
     console.error('❌ Error in automatic plan generation:', error);
@@ -1124,7 +1114,7 @@ function showMainChatPlanDetails(plan) {
 const API_BASE_URL = 'https://eigenarc.com';
 
 // API Functions for Chat and Plan Generation
-async function createConversation(title = "New Conversation", formData = null) {
+async function createConversation(title = "New Conversation", formData = null, isCreatePlan = false) {
   try {
     const token = await window.firebaseAuth.getValidToken();
     
@@ -1154,8 +1144,13 @@ async function createConversation(title = "New Conversation", formData = null) {
     }
 
     const conversation = await response.json();
-    currentConversationId = conversation.id;
-    console.log('Conversation created:', conversation.id);
+    
+    // Only set currentConversationId for main chat, not Create Plan
+    if (!isCreatePlan) {
+      currentConversationId = conversation.id;
+    }
+    
+    console.log('Conversation created:', conversation.id, isCreatePlan ? '(Create Plan)' : '(Main Chat)');
     return conversation;
   } catch (error) {
     console.error('Error creating conversation:', error);
@@ -1163,14 +1158,17 @@ async function createConversation(title = "New Conversation", formData = null) {
   }
 }
 
-async function sendMessage(content) {
+async function sendMessage(content, conversationId = null) {
   try {
-    if (!currentConversationId) {
+    // Use provided conversationId or fall back to current main conversation
+    const activeConversationId = conversationId || currentConversationId;
+    
+    if (!activeConversationId) {
       throw new Error('No active conversation');
     }
 
     const token = await window.firebaseAuth.getValidToken();
-    const response = await fetch(`${API_BASE_URL}/api/conversations/${currentConversationId}/messages`, {
+    const response = await fetch(`${API_BASE_URL}/api/conversations/${activeConversationId}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2831,14 +2829,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Clear saved form data
       await clearSavedFormData();
       
+      // Reset chat to initial state
+      const chatContainer = document.getElementById('createPlanMessages');
+      
       // Remove chat input if it exists
       const chatInput = chatContainer.parentElement.querySelector('.chat-input-container');
       if (chatInput) {
         chatInput.remove();
       }
-      
-      // Reset chat to initial state
-      const chatContainer = document.getElementById('createPlanMessages');
       if (chatContainer) {
         // Keep only the first two messages (welcome and form)
         const messages = chatContainer.children;
