@@ -1423,7 +1423,11 @@ function switchTab(tabName, element) {
     // Restore both form data and conversation history when switching to Create Plan tab
     setTimeout(async () => {
       await restoreFormData();
-      displayConversationHistory('createPlanMessages');
+      // Only display conversation history if there is actual conversation data
+      // Don't overwrite the fresh form with empty history
+      if (conversationHistory['createPlanMessages'] && conversationHistory['createPlanMessages'].length > 0) {
+        displayConversationHistory('createPlanMessages');
+      }
     }, 100);
   } else if (tabName === 'examples') {
     console.log('Switching to examples tab...');
@@ -2870,6 +2874,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Clear conversation state
       currentCreatePlanConversationId = null;
+      
+      // Clear conversation history to prevent it from overwriting the form
+      conversationHistory['createPlanMessages'] = [];
       
       // Clear saved form data
       await clearSavedFormData();
