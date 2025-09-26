@@ -289,7 +289,6 @@ async function sendChatMessage() {
 }
 
 async function handleFormPlanCreation(formData) {
-  const resultContainer = document.getElementById('planGenerationResult');
   const generateBtn = document.getElementById('generatePlanBtn');
   const originalBtnText = generateBtn.textContent;
   
@@ -298,14 +297,8 @@ async function handleFormPlanCreation(formData) {
     generateBtn.disabled = true;
     generateBtn.textContent = '⚡ Generating...';
     
-    // Show loading message
-    resultContainer.style.display = 'block';
-    resultContainer.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: hsl(142, 35%, 42%);">
-        <div style="font-size: 18px; margin-bottom: 10px;">⚡ Generating your personalized learning plan...</div>
-        <div style="font-size: 14px; color: #666;">This may take a few moments</div>
-      </div>
-    `;
+    // Add loading message to chat
+    addMessageToChat('ai', '⚡ Generating your personalized learning plan... This may take a few moments.', 'createPlanMessages');
     
     // Prepare parameters for API call
     const params = {
@@ -321,22 +314,16 @@ async function handleFormPlanCreation(formData) {
     // Generate the plan directly (no conversation needed)
     const plan = await generatePlanFromForm(params);
     
-    // Show success and the generated plan
-    resultContainer.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: hsl(142, 35%, 42%); border-bottom: 1px solid #eee;">
-        <div style="font-size: 18px; margin-bottom: 10px;">🎉 Your learning plan is ready!</div>
-        <div style="font-size: 14px; color: #666;">Here's your personalized learning plan:</div>
-      </div>
-    `;
+    // Add success message to chat
+    addMessageToChat('ai', '🎉 Perfect! I\'ve created your personalized learning plan. Here\'s what I\'ve prepared for you:', 'createPlanMessages');
     
-    // Display the generated plan
-    const planContainer = document.createElement('div');
-    planContainer.style.padding = '20px';
-    
+    // Display the generated plan in chat
+    const chatContainer = document.getElementById('createPlanMessages');
     const planPreview = createPlanPreviewElement(plan, false); // false = not main chat
-    planContainer.appendChild(planPreview);
+    chatContainer.appendChild(planPreview);
     
-    resultContainer.appendChild(planContainer);
+    // Scroll to show the new content
+    chatContainer.scrollTop = chatContainer.scrollHeight;
     
     console.log('Plan generated successfully:', plan.id);
     
@@ -345,12 +332,7 @@ async function handleFormPlanCreation(formData) {
     
   } catch (error) {
     console.error('Error generating plan from form:', error);
-    resultContainer.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: #e74c3c;">
-        <div style="font-size: 16px; margin-bottom: 10px;">❌ Error generating plan</div>
-        <div style="font-size: 14px;">Sorry, I encountered an error while generating your plan. Please check your inputs and try again.</div>
-      </div>
-    `;
+    addMessageToChat('ai', '❌ Sorry, I encountered an error while generating your plan. Please check your inputs and try again.', 'createPlanMessages');
   } finally {
     // Re-enable form
     generateBtn.disabled = false;
@@ -2680,6 +2662,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
+  // New Plan button for Create Plan tab
+  const newCreatePlanConversationBtn = document.getElementById('newCreatePlanConversationBtn');
+  if (newCreatePlanConversationBtn) {
+    newCreatePlanConversationBtn.addEventListener('click', async () => {
+      // Clear form fields
+      document.getElementById('planSubject').value = '';
+      document.getElementById('planSkillLevel').value = '';
+      document.getElementById('planDuration').value = '';
+      document.getElementById('planTimeCommitment').value = '';
+      document.getElementById('planGoals').value = '';
+      
+      // Clear saved form data
+      await clearSavedFormData();
+      
+      // Reset chat to initial state
+      const chatContainer = document.getElementById('createPlanMessages');
+      if (chatContainer) {
+        // Keep only the first two messages (welcome and form)
+        const messages = chatContainer.children;
+        const messagesToKeep = 2; // Welcome message + form message
+        while (messages.length > messagesToKeep) {
+          chatContainer.removeChild(messages[messagesToKeep]);
+        }
+      }
+    });
+  }
+  
   // Add keyboard support for main chat input
   const chatInput = document.getElementById('chatInput');
   if (chatInput) {
@@ -2771,11 +2780,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Clear saved form data
         await clearSavedFormData();
         
-        // Clear result area
-        const resultContainer = document.getElementById('planGenerationResult');
-        if (resultContainer) {
-          resultContainer.style.display = 'none';
-          resultContainer.innerHTML = '';
+        // Reset chat to initial state
+        const chatContainer = document.getElementById('createPlanMessages');
+        if (chatContainer) {
+          // Keep only the first two messages (welcome and form)
+          const messages = chatContainer.children;
+          const messagesToKeep = 2; // Welcome message + form message
+          while (messages.length > messagesToKeep) {
+            chatContainer.removeChild(messages[messagesToKeep]);
+          }
         }
       });
     }
