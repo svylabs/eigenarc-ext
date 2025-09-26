@@ -241,6 +241,9 @@ async function sendChatMessage() {
   addMessageToChat('user', message, 'chatMessages');
   input.value = '';
   
+  // Add typing indicator
+  addMessageToChat('ai', '💭 AI is thinking...', 'chatMessages', 'typing-indicator');
+  
   try {
     // Create conversation if not exists
     if (!currentConversationId) {
@@ -249,6 +252,9 @@ async function sendChatMessage() {
     
     // Send message and get AI response
     const result = await sendMessage(message);
+    
+    // Remove typing indicator before adding AI response
+    removeTypingIndicator('chatMessages');
     
     // Add AI response to chat
     if (result.aiMessage && result.aiMessage.content) {
@@ -278,6 +284,8 @@ async function sendChatMessage() {
     
   } catch (error) {
     console.error('Error in main chat:', error);
+    // Remove typing indicator
+    removeTypingIndicator('chatMessages');
     addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.', 'chatMessages');
   } finally {
     // Re-enable input
@@ -421,9 +429,23 @@ async function sendCreatePlanMessage(message) {
     return;
   }
   
+  // Get references to input elements for loading state
+  const chatInput = document.getElementById('createPlanChatInput');
+  const sendBtn = document.getElementById('createPlanSendBtn');
+  
+  // Disable input during API call
+  if (chatInput) chatInput.disabled = true;
+  if (sendBtn) {
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending...';
+  }
+  
   try {
     // Add user message to chat
     addMessageToChat('user', message, 'createPlanMessages');
+    
+    // Add typing indicator
+    addMessageToChat('ai', '💭 AI is thinking...', 'createPlanMessages', 'typing-indicator');
     
     // Send message to API using the Create Plan conversation
     const result = await sendMessage(message, currentCreatePlanConversationId);
@@ -452,13 +474,25 @@ async function sendCreatePlanMessage(message) {
       }
     }
     
+    // Remove typing indicator
+    removeTypingIndicator('createPlanMessages');
+    
     // Scroll to show new message
     const chatContainer = document.getElementById('createPlanMessages');
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
   } catch (error) {
     console.error('Error sending create plan message:', error);
+    // Remove typing indicator
+    removeTypingIndicator('createPlanMessages');
     addMessageToChat('ai', '❌ Sorry, I encountered an error. Please try again.', 'createPlanMessages');
+  } finally {
+    // Re-enable input elements
+    if (chatInput) chatInput.disabled = false;
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send';
+    }
   }
 }
 
@@ -557,10 +591,21 @@ async function clearSavedFormData() {
   }
 }
 
-function addMessageToChat(sender, message, containerId) {
+// Helper function to remove typing indicators
+function removeTypingIndicator(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    const typingIndicator = container.querySelector('.typing-indicator');
+    if (typingIndicator) {
+      typingIndicator.remove();
+    }
+  }
+}
+
+function addMessageToChat(sender, message, containerId, extraClass = '') {
   const container = document.getElementById(containerId);
   const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${sender}`;
+  messageDiv.className = `message ${sender}${extraClass ? ' ' + extraClass : ''}`;
   
   // Use textContent to prevent XSS attacks
   if (typeof message === 'string' && message.includes('<')) {
