@@ -313,8 +313,18 @@ async function handleFormPlanCreation(formData) {
     
     console.log('Create Plan conversation ID set to:', currentCreatePlanConversationId);
     
-    // Add confirmation message
-    addMessageToChat('ai', '✅ Great! I\'ve created your learning conversation. The AI is now analyzing your preferences and will automatically generate your personalized plan when ready.', 'createPlanMessages');
+    // Add summary of submitted form data
+    const formSummary = `✅ Perfect! I've received your learning preferences:
+
+**Subject:** ${formData.subject}
+**Skill Level:** ${formData.skillLevel.charAt(0).toUpperCase() + formData.skillLevel.slice(1)}
+**Duration:** ${formData.duration}
+**Daily Time:** ${formData.timeCommitment}
+**Goals:** ${formData.goals}
+
+I'm now setting up your personalized learning conversation. Feel free to chat with me below to further customize your plan, ask questions, or share additional preferences!`;
+    
+    addMessageToChat('ai', formSummary, 'createPlanMessages');
     
     // Add chat input for continued conversation
     enableCreatePlanChat();
