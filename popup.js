@@ -319,6 +319,9 @@ async function handleFormPlanCreation(formData) {
     const conversation = await createConversation(title, formData, true);
     currentCreatePlanConversationId = conversation.id;
     
+    // Save the Create Plan conversation ID to storage
+    await chrome.storage.local.set({ currentCreatePlanConversationId: currentCreatePlanConversationId });
+    
     console.log('Create Plan conversation ID set to:', currentCreatePlanConversationId);
     
     // Add summary of submitted form data
@@ -651,7 +654,8 @@ async function saveMessageToHistory(sender, message, messageType = 'text', data 
     // Save to storage
     await chrome.storage.local.set({ 
       conversationHistory: conversationHistory,
-      lastConversationId: activeConversationId
+      lastConversationId: activeConversationId,
+      currentCreatePlanConversationId: currentCreatePlanConversationId
     });
     
     console.log('💾 Message saved to conversation history:', activeConversationId, messageType);
@@ -707,7 +711,7 @@ async function saveConversationPlanState(planId, conversationId = null) {
 // Load conversation history from storage
 async function loadConversationHistory() {
   try {
-    const result = await chrome.storage.local.get(['conversationHistory', 'lastConversationId']);
+    const result = await chrome.storage.local.get(['conversationHistory', 'lastConversationId', 'currentCreatePlanConversationId']);
     
     if (result.conversationHistory) {
       conversationHistory = result.conversationHistory;
@@ -720,6 +724,12 @@ async function loadConversationHistory() {
       console.log('🔄 Restored last conversation ID:', currentConversationId);
     }
     
+    // Restore Create Plan conversation ID
+    if (result.currentCreatePlanConversationId) {
+      currentCreatePlanConversationId = result.currentCreatePlanConversationId;
+      console.log('🔄 Restored Create Plan conversation ID:', currentCreatePlanConversationId);
+    }
+    
     return conversationHistory;
   } catch (error) {
     console.error('Error loading conversation history:', error);
@@ -729,15 +739,18 @@ async function loadConversationHistory() {
 
 // Display conversation messages in chat container
 async function displayConversationHistory(containerId) {
-  if (!currentConversationId || !conversationHistory[currentConversationId]) {
+  // Determine which conversation ID to use based on container
+  const conversationId = containerId === 'createPlanMessages' ? currentCreatePlanConversationId : currentConversationId;
+  
+  if (!conversationId || !conversationHistory[conversationId]) {
     console.log('📭 No conversation history to display for:', currentConversationId);
     return;
   }
   
   const container = document.getElementById(containerId);
-  const messages = conversationHistory[currentConversationId];
+  const messages = conversationHistory[conversationId];
   
-  console.log('📖 Displaying', messages.length, 'messages for conversation:', currentConversationId);
+  console.log('📖 Displaying', messages.length, 'messages for conversation:', conversationId);
   
   // Clear existing messages except welcome message
   const welcomeMessage = container.querySelector('.message.ai');
@@ -1468,9 +1481,8 @@ function switchTab(tabName, element) {
     // Restore both form data and conversation history when switching to Create Plan tab
     setTimeout(async () => {
       await restoreFormData();
-      // Only display conversation history if there is actual conversation data
-      // Don't overwrite the fresh form with empty history
-      if (conversationHistory['createPlanMessages'] && conversationHistory['createPlanMessages'].length > 0) {
+      // Display conversation history if there's an active Create Plan conversation
+      if (currentCreatePlanConversationId && conversationHistory[currentCreatePlanConversationId] && conversationHistory[currentCreatePlanConversationId].length > 0) {
         displayConversationHistory('createPlanMessages');
       }
     }, 100);
@@ -2917,11 +2929,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('planTimeCommitment').value = '';
       document.getElementById('planGoals').value = '';
       
+      // Clear conversation history for the current Create Plan conversation before resetting ID
+      if (currentCreatePlanConversationId && conversationHistory[currentCreatePlanConversationId]) {
+        delete conversationHistory[currentCreatePlanConversationId];
+      }
+      
       // Clear conversation state
       currentCreatePlanConversationId = null;
       
-      // Clear conversation history to prevent it from overwriting the form
-      conversationHistory['createPlanMessages'] = [];
+      // Clear from storage
+      await chrome.storage.local.set({ currentCreatePlanConversationId: null });
       
       // Clear saved form data
       await clearSavedFormData();
