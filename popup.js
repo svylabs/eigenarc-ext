@@ -16,6 +16,7 @@ let currentTab = 'currentPlan';
 
 // Chat and conversation state
 let currentConversationId = null;
+let currentCreatePlanConversationId = null;
 let generatedPlanId = null;
 let conversationHistory = {}; // Store conversation messages by conversationId
 
@@ -295,48 +296,183 @@ async function handleFormPlanCreation(formData) {
   try {
     // Disable form and show loading
     generateBtn.disabled = true;
-    generateBtn.textContent = '⚡ Generating...';
+    generateBtn.textContent = '⚡ Creating...';
     
-    // Add loading message to chat
-    addMessageToChat('ai', '⚡ Generating your personalized learning plan... This may take a few moments.', 'createPlanMessages');
+    // Add initial message to chat
+    addMessageToChat('ai', '🎯 Perfect! I\'m setting up your personalized learning conversation. Let me analyze your goals and preferences...', 'createPlanMessages');
     
-    // Prepare parameters for API call
-    const params = {
-      subject: formData.subject,
-      skillLevel: formData.skillLevel,
-      timeline: formData.duration,  // API expects 'timeline' not 'duration'
-      dailyTime: formData.timeCommitment,
-      goals: formData.goals
-    };
+    // Create conversation with form data
+    const title = `Learning Plan: ${formData.subject}`;
+    currentCreatePlanConversationId = null; // Reset conversation ID for create plan tab
     
-    console.log('Generating plan with parameters:', params);
+    console.log('Creating conversation with form data:', formData);
     
-    // Generate the plan directly (no conversation needed)
-    const plan = await generatePlanFromForm(params);
+    // Create the conversation with form data
+    const conversation = await createConversation(title, formData);
+    currentCreatePlanConversationId = conversation.id;
     
-    // Add success message to chat
-    addMessageToChat('ai', '🎉 Perfect! I\'ve created your personalized learning plan. Here\'s what I\'ve prepared for you:', 'createPlanMessages');
+    // Add confirmation message
+    addMessageToChat('ai', '✅ Great! I\'ve created your learning conversation. The AI is now analyzing your preferences and will automatically generate your personalized plan when ready.', 'createPlanMessages');
     
-    // Display the generated plan in chat
-    const chatContainer = document.getElementById('createPlanMessages');
-    const planPreview = createPlanPreviewElement(plan, false); // false = not main chat
-    chatContainer.appendChild(planPreview);
+    // Add chat input for continued conversation
+    enableCreatePlanChat();
     
     // Scroll to show the new content
+    const chatContainer = document.getElementById('createPlanMessages');
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
-    console.log('Plan generated successfully:', plan.id);
+    console.log('Conversation created successfully:', conversation.id);
     
     // Save form data for future use
     await saveFormData(formData);
     
   } catch (error) {
-    console.error('Error generating plan from form:', error);
-    addMessageToChat('ai', '❌ Sorry, I encountered an error while generating your plan. Please check your inputs and try again.', 'createPlanMessages');
+    console.error('Error creating conversation from form:', error);
+    addMessageToChat('ai', '❌ Sorry, I encountered an error while setting up your learning conversation. Please check your inputs and try again.', 'createPlanMessages');
   } finally {
     // Re-enable form
     generateBtn.disabled = false;
     generateBtn.textContent = originalBtnText;
+  }
+}
+
+// Enable chat functionality in Create Plan tab
+function enableCreatePlanChat() {
+  const chatContainer = document.getElementById('createPlanMessages');
+  
+  // Check if chat input already exists
+  if (chatContainer.parentElement.querySelector('.chat-input-container')) {
+    return; // Already enabled
+  }
+  
+  // Create chat input HTML
+  const chatInputHtml = `
+    <div class="chat-input-container" style="padding: 15px; border-top: 1px solid #e1e5e9; background: #f8f9fa;">
+      <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <textarea 
+          id="createPlanChatInput" 
+          placeholder="Continue the conversation to personalize your plan..."
+          style="flex: 1; min-height: 40px; max-height: 120px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: none; font-family: inherit; outline: none;"
+        ></textarea>
+        <button 
+          id="createPlanSendBtn"
+          style="background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Add chat input to the container
+  chatContainer.parentElement.insertAdjacentHTML('beforeend', chatInputHtml);
+  
+  // Add event listeners
+  const chatInput = document.getElementById('createPlanChatInput');
+  const sendBtn = document.getElementById('createPlanSendBtn');
+  
+  // Send message on button click
+  sendBtn.addEventListener('click', () => {
+    const message = chatInput.value.trim();
+    if (message) {
+      sendCreatePlanMessage(message);
+      chatInput.value = '';
+    }
+  });
+  
+  // Send message on Enter (but allow Shift+Enter for new lines)
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const message = chatInput.value.trim();
+      if (message) {
+        sendCreatePlanMessage(message);
+        chatInput.value = '';
+      }
+    }
+  });
+  
+  // Auto-resize textarea
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  });
+  
+  // Focus the input
+  setTimeout(() => chatInput.focus(), 100);
+}
+
+// Send message in Create Plan context
+async function sendCreatePlanMessage(message) {
+  if (!currentCreatePlanConversationId) {
+    addMessageToChat('ai', '❌ No active conversation. Please create a new plan first.', 'createPlanMessages');
+    return;
+  }
+  
+  try {
+    // Add user message to chat
+    addMessageToChat('user', message, 'createPlanMessages');
+    
+    // Send message to API
+    const result = await sendMessageToConversation(currentCreatePlanConversationId, message);
+    
+    // Add AI response to chat
+    if (result.aiMessage && result.aiMessage.content) {
+      const aiContent = typeof result.aiMessage.content === 'string' 
+        ? result.aiMessage.content 
+        : result.aiMessage.content.conversationReply || 'I received your message.';
+      
+      addMessageToChat('ai', aiContent, 'createPlanMessages');
+      
+      // Check if AI can automatically generate a plan
+      if (result.can_generate_plan && result.plan_parameters) {
+        // Auto-generating plan with API-provided parameters
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
+        }, 1000);
+      }
+      // Only auto-generate when API explicitly indicates readiness with proper parameters
+      else if (typeof result.aiMessage.content === 'object' && result.aiMessage.content.type === 'plan_suggestion' && result.plan_parameters) {
+        // API suggests plan generation - triggering automatic generation
+        setTimeout(async () => {
+          await handleAutomaticPlanGeneration(result.plan_parameters, 'createPlanMessages');
+        }, 1500);
+      }
+    }
+    
+    // Scroll to show new message
+    const chatContainer = document.getElementById('createPlanMessages');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+  } catch (error) {
+    console.error('Error sending create plan message:', error);
+    addMessageToChat('ai', '❌ Sorry, I encountered an error. Please try again.', 'createPlanMessages');
+  }
+}
+
+// Send message to specific conversation
+async function sendMessageToConversation(conversationId, content) {
+  try {
+    const token = await window.firebaseAuth.getValidToken();
+    const response = await fetch(`${API_BASE_URL}/api/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Message sent to conversation:', conversationId);
+    return result;
+  } catch (error) {
+    console.error('Error sending message to conversation:', error);
+    throw error;
   }
 }
 
@@ -988,16 +1124,29 @@ function showMainChatPlanDetails(plan) {
 const API_BASE_URL = 'https://eigenarc.com';
 
 // API Functions for Chat and Plan Generation
-async function createConversation(title = "New Conversation") {
+async function createConversation(title = "New Conversation", formData = null) {
   try {
     const token = await window.firebaseAuth.getValidToken();
+    
+    // Prepare the body - include form data if provided
+    const body = formData ? 
+      {
+        title,
+        subject: formData.subject,
+        skillLevel: formData.skillLevel,
+        duration: formData.duration,
+        dailyTime: formData.timeCommitment,
+        goals: formData.goals
+      } : 
+      { title };
+    
     const response = await fetch(`${API_BASE_URL}/api/conversations`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ title })
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -1043,9 +1192,12 @@ async function sendMessage(content) {
   }
 }
 
-async function generatePlan(params) {
+async function generatePlan(params, conversationId = null) {
   try {
-    if (!currentConversationId) {
+    // Use provided conversationId or fall back to current ones
+    const activeConversationId = conversationId || currentCreatePlanConversationId || currentConversationId;
+    
+    if (!activeConversationId) {
       throw new Error('No active conversation');
     }
 
@@ -1057,7 +1209,7 @@ async function generatePlan(params) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        conversationId: currentConversationId,
+        conversationId: activeConversationId,
         ...params
       })
     });
@@ -2673,8 +2825,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('planTimeCommitment').value = '';
       document.getElementById('planGoals').value = '';
       
+      // Clear conversation state
+      currentCreatePlanConversationId = null;
+      
       // Clear saved form data
       await clearSavedFormData();
+      
+      // Remove chat input if it exists
+      const chatInput = chatContainer.parentElement.querySelector('.chat-input-container');
+      if (chatInput) {
+        chatInput.remove();
+      }
       
       // Reset chat to initial state
       const chatContainer = document.getElementById('createPlanMessages');
