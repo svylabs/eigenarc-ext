@@ -1507,6 +1507,8 @@ function switchTab(tabName, element) {
       // Display conversation history if there's an active Create Plan conversation
       if (currentCreatePlanConversationId && conversationHistory[currentCreatePlanConversationId] && conversationHistory[currentCreatePlanConversationId].length > 0) {
         displayConversationHistory('createPlanMessages');
+        // Enable chat input since there's an active conversation
+        enableCreatePlanChat();
       }
     }, 100);
   } else if (tabName === 'examples') {
