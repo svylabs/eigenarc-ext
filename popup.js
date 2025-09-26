@@ -463,6 +463,41 @@ async function sendCreatePlanMessage(message) {
 }
 
 
+// Attach Create Plan form event listeners
+function attachCreatePlanFormListeners() {
+  const form = document.getElementById('createPlanForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        subject: document.getElementById('planSubject').value,
+        skillLevel: document.getElementById('planSkillLevel').value,
+        duration: document.getElementById('planDuration').value,
+        timeCommitment: document.getElementById('planTimeCommitment').value,
+        goals: document.getElementById('planGoals').value
+      };
+      
+      await handleFormPlanCreation(formData);
+    });
+  }
+  
+  const clearBtn = document.getElementById('clearFormBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', async () => {
+      // Clear form fields
+      document.getElementById('planSubject').value = '';
+      document.getElementById('planSkillLevel').value = '';
+      document.getElementById('planDuration').value = '';
+      document.getElementById('planTimeCommitment').value = '';
+      document.getElementById('planGoals').value = '';
+      
+      // Clear saved form data
+      await clearSavedFormData();
+    });
+  }
+}
+
 // Form data persistence functions
 async function saveFormData(formData) {
   try {
@@ -2848,12 +2883,125 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatInput.remove();
       }
       if (chatContainer) {
-        // Keep only the first two messages (welcome and form)
-        const messages = chatContainer.children;
-        const messagesToKeep = 2; // Welcome message + form message
-        while (messages.length > messagesToKeep) {
-          chatContainer.removeChild(messages[messagesToKeep]);
-        }
+        // Clear all messages and restore initial state
+        chatContainer.innerHTML = `
+          <div class="message ai">
+            Let's create your personalized learning plan! Please fill out the form below with your goals and preferences.
+            <br><br>
+            <a href="#" id="chatPageLink" style="color: hsl(142, 35%, 42%); text-decoration: none;">Need inspiration? Check example learning plans →</a>
+          </div>
+          
+          <!-- Inline Form Message -->
+          <div class="message ai" id="createPlanFormMessage">
+            <form id="createPlanForm" style="max-width: 100%;">
+              <div style="margin-bottom: 15px;">
+                <label for="planSubject" style="display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 13px;">
+                  Subject / Topic of Study
+                </label>
+                <input 
+                  type="text" 
+                  id="planSubject" 
+                  required
+                  placeholder="e.g., Machine Learning, Web Development, Data Science"
+                  style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; box-sizing: border-box;"
+                >
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                  <label for="planSkillLevel" style="display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 13px;">
+                    Skill Level
+                  </label>
+                  <select 
+                    id="planSkillLevel" 
+                    required
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: white; box-sizing: border-box;"
+                  >
+                    <option value="">Select level</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+                
+                <div style="flex: 1;">
+                  <label for="planDuration" style="display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 13px;">
+                    Duration
+                  </label>
+                  <select 
+                    id="planDuration" 
+                    required
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: white; box-sizing: border-box;"
+                  >
+                    <option value="">Select duration</option>
+                    <option value="1 week">1 Week</option>
+                    <option value="2 weeks">2 Weeks</option>
+                    <option value="4 weeks">1 Month</option>
+                    <option value="8 weeks">2 Months</option>
+                    <option value="12 weeks">3 Months</option>
+                    <option value="6 months">6 Months</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <label for="planTimeCommitment" style="display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 13px;">
+                  Daily Time Commitment
+                </label>
+                <select 
+                  id="planTimeCommitment" 
+                  required
+                  style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: white; box-sizing: border-box;"
+                >
+                  <option value="">Select daily time</option>
+                  <option value="30 minutes">30 minutes</option>
+                  <option value="1 hour">1 hour</option>
+                  <option value="2 hours">2 hours</option>
+                  <option value="3 hours">3 hours</option>
+                  <option value="4+ hours">4+ hours</option>
+                </select>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label for="planGoals" style="display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 13px;">
+                  Learning Goals
+                </label>
+                <textarea 
+                  id="planGoals" 
+                  required
+                  rows="3"
+                  placeholder="Describe what you want to achieve, specific skills to learn, projects to build, etc."
+                  style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; box-sizing: border-box; font-family: inherit;"
+                ></textarea>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button 
+                  type="submit" 
+                  id="generatePlanBtn"
+                  style="flex: 1; background: linear-gradient(135deg, hsl(142, 35%, 42%) 0%, hsl(142, 40%, 52%) 100%); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"
+                >
+                  ✨ Personalize
+                </button>
+                <button 
+                  type="button" 
+                  id="clearFormBtn"
+                  style="background: transparent; color: hsl(142, 35%, 42%); border: 1px solid hsl(142, 35%, 42%); padding: 10px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+        
+        // Re-attach form event listeners and restore form data
+        attachCreatePlanFormListeners();
+        
+        // Restore form data after recreating the form
+        setTimeout(async () => {
+          await restoreFormData();
+        }, 100);
       }
     });
   }
