@@ -818,18 +818,10 @@ async function displayGeneratedPlanFromHistory(planData, container) {
     if (response.ok) {
       const plan = await response.json();
       
-      // Display the plan using the appropriate display function
-      if (planData.containerId === 'chatMessages') {
-        // Create the plan preview element and append to container
-        addMessageToChat('ai', '🎉 Perfect! I\'ve created your personalized learning plan based on our conversation:', planData.containerId);
-        const planPreview = createPlanPreviewElement(plan, true);
-        container.appendChild(planPreview);
-      } else {
-        // For createPlanMessages
-        addMessageToChat('ai', '🎉 Great! I\'ve created your personalized learning plan. Here\'s what I\'ve prepared for you:', planData.containerId);
-        const planPreview = createPlanPreviewElement(plan, false);
-        container.appendChild(planPreview);
-      }
+      // Display the plan preview directly (message was already saved to history when plan was first generated)
+      const isMainChat = planData.containerId === 'chatMessages';
+      const planPreview = createPlanPreviewElement(plan, isMainChat);
+      container.appendChild(planPreview);
     } else {
       // Plan no longer exists, show error message
       const errorDiv = document.createElement('div');
