@@ -752,14 +752,37 @@ async function displayConversationHistory(containerId) {
   
   console.log('📖 Displaying', messages.length, 'messages for conversation:', conversationId);
   
-  // Clear existing messages except welcome message
-  const welcomeMessage = container.querySelector('.message.ai');
-  const welcomeMessageHtml = welcomeMessage?.outerHTML;
-  container.innerHTML = '';
-  
-  // Restore welcome message if it existed
-  if (welcomeMessageHtml) {
-    container.innerHTML = welcomeMessageHtml;
+  // Handle Create Plan tab differently - preserve form
+  if (containerId === 'createPlanMessages') {
+    // For Create Plan tab, preserve welcome message and form
+    const welcomeMessage = container.querySelector('.message.ai:first-child');
+    const formMessage = container.querySelector('#createPlanFormMessage');
+    const welcomeHtml = welcomeMessage?.outerHTML || '';
+    const formHtml = formMessage?.outerHTML || '';
+    
+    // Clear container and restore welcome + form
+    container.innerHTML = '';
+    if (welcomeHtml) container.innerHTML += welcomeHtml;
+    if (formHtml) container.innerHTML += formHtml;
+    
+    // Re-attach form listeners if form was restored
+    if (formHtml) {
+      attachCreatePlanFormListeners();
+      // Restore form data after recreation
+      setTimeout(async () => {
+        await restoreFormData();
+      }, 50);
+    }
+  } else {
+    // For main chat, only preserve welcome message
+    const welcomeMessage = container.querySelector('.message.ai');
+    const welcomeMessageHtml = welcomeMessage?.outerHTML;
+    container.innerHTML = '';
+    
+    // Restore welcome message if it existed
+    if (welcomeMessageHtml) {
+      container.innerHTML = welcomeMessageHtml;
+    }
   }
   
   // Add conversation history
