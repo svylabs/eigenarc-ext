@@ -883,6 +883,16 @@ async function startNewConversation(containerId) {
   }
 }
 
+// Generate slug from plan title
+function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim('-'); // Remove leading/trailing hyphens
+}
+
 // Create plan preview element (extracted from existing functions)
 function createPlanPreviewElement(plan, isMainChat = false) {
   const planPreview = document.createElement('div');
@@ -916,6 +926,12 @@ function createPlanPreviewElement(plan, isMainChat = false) {
         <div style="font-size: 12px; color: #666; margin-bottom: 2px;">Phases</div>
         <div style="font-weight: 600; color: #333;">${plan.phases.length}</div>
       </div>
+    </div>
+    
+    <div style="margin-bottom: 16px;">
+      <a href="https://eigenarc.com/plan/${generateSlug(plan.title)}-${plan.id}" target="_blank" style="color: hsl(142, 35%, 42%); text-decoration: none; font-size: 14px; font-weight: 600;">
+        🔗 View Full Plan on Eigenarc.com
+      </a>
     </div>
     
     <div style="display: flex; gap: 12px;">
